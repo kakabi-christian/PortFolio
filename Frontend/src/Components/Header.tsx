@@ -14,7 +14,7 @@ export default function Header() {
             className="img-fluid"
             
           />
-          <span style={{ color:'white', fontSize:'20px' }}> PORTFOLIO</span>
+          <span style={{ color:'white', fontSize:'15px' }}> PORTFOLIO</span>
         </Link>
 
         {/* Bouton Hamburger pour mobile */}
