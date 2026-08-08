@@ -1,0 +1,38 @@
+/* theme.css */
+:root {
+    /* 1. Primary - Bleu Tech / Accent principal */
+    --color-primary: #38bdf8;
+    --color-primary-hover: #0ea5e9;
+
+    /* 2. Background - Fond global du site (Sombre élégant) */
+    --color-bg: #0f172a;
+
+    /* 3. Surface / Card - Pour les blocs, cartes et la navbar */
+    --color-surface: #1e293b;
+
+    /* Textes associés */
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+
+    /* 4. Green - Succès / Validation / Tech active */
+    --color-success: #22c55e;
+    --color-success-bg: rgba(34, 197, 94, 0.1);
+
+    /* 5. Red - Alerte / Erreur / Accent dynamique */
+    --color-danger: #ef4444;
+    --color-danger-bg: rgba(239, 68, 68, 0.1);
+
+    /* Bordures subtiles */
+    --color-border: #334155;
+}
+
+/* Application globale de base */
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text-main);
+    font-family: century;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
