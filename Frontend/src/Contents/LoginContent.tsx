@@ -1,10 +1,107 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { MdEmail, MdLock, MdArrowForward, MdErrorOutline, MdCheckCircleOutline } from "react-icons/md";
 //@ts-ignore
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { authService } from "../Services/AuthService";
+import { Canvas, useFrame } from '@react-three/fiber';
+
+/* ============================================================
+   FOND 3D — VISAGE CYBORG / HUD HIGH-TECH (React Three Fiber)
+   ============================================================ */
+function CyborgHeadHUD({
+  position,
+  rotationSpeed,
+  color
+}: {
+  position: [number, number, number];
+  rotationSpeed: number;
+  color: string;
+}) {
+  const groupRef = useRef<any>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.getElapsedTime();
+    groupRef.current.rotation.y = t * rotationSpeed;
+    groupRef.current.position.y = position[1] + Math.sin(t * 1.5) * 0.2;
+  });
+
+  return (
+    <group ref={groupRef} position={position}>
+      {/* Structure crânienne / Casque Cyborg abstrait (Icosaèdre étiré / Capsule) */}
+      <mesh position={[0, 0.2, 0]}>
+        <icosahedronGeometry args={[1.1, 1]} />
+        <meshBasicMaterial color={color} wireframe transparent opacity={0.35} />
+      </mesh>
+
+      {/* Visière / Yeux lumineux HUD */}
+      <mesh position={[0, 0.25, 0.85]}>
+        <boxGeometry args={[1.1, 0.2, 0.2]} />
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.8} />
+      </mesh>
+
+      {/* Anneau de données holographique autour du cyborg */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+        <torusGeometry args={[1.6, 0.03, 16, 60]} />
+        <meshBasicMaterial color={color} wireframe transparent opacity={0.4} />
+      </mesh>
+
+      {/* Module de la mâchoire / Nuage de points techniques */}
+      <mesh position={[0, -0.6, 0]}>
+        <octahedronGeometry args={[0.7, 0]} />
+        <meshBasicMaterial color="#22c55e" wireframe transparent opacity={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
+function ParallaxRig({ children }: { children: React.ReactNode }) {
+  const groupRef = useRef<any>(null);
+  const mouse = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, []);
+
+  useFrame(() => {
+    if (!groupRef.current) return;
+    groupRef.current.rotation.y += (mouse.current.x * 0.25 - groupRef.current.rotation.y) * 0.04;
+    groupRef.current.rotation.x += (-mouse.current.y * 0.2 - groupRef.current.rotation.x) * 0.04;
+  });
+
+  return <group ref={groupRef}>{children}</group>;
+}
+
+function LoginBackground3D() {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+        overflow: 'hidden'
+      }}
+    >
+      <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={[1, 1.5]}>
+        <ParallaxRig>
+          {/* Tête de Cyborg centrale / Flottante avec orbite dynamique */}
+          <CyborgHeadHUD position={[0, 0, -2]} rotationSpeed={0.4} color="#38bdf8" />
+          {/* Éléments secondaires de soutien high-tech */}
+          <CyborgHeadHUD position={[-4, 1.5, -4]} rotationSpeed={-0.3} color="#22c55e" />
+          <CyborgHeadHUD position={[4, -1.5, -4]} rotationSpeed={0.5} color="#60a5fa" />
+        </ParallaxRig>
+      </Canvas>
+    </div>
+  );
+}
 
 export default function LoginContent() {
   const navigate = useNavigate();
@@ -66,34 +163,43 @@ export default function LoginContent() {
   };
 
   return (
-    <div className="login-page-wrapper d-flex align-items-center justify-content-center" 
+    <div className="login-page-wrapper d-flex align-items-center justify-content-center position-relative overflow-hidden" 
          style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
       
-      <div className="login-card p-4 p-md-5 shadow-2xl rounded-5 border-0" 
-            data-aos="zoom-in-up"
-            style={{ 
-              maxWidth: '450px', 
-              width: '90%', 
-              backgroundColor: 'var(--color-surface)',
-              border: '1px solid var(--color-border)'
-            }}>
+      {/* Fond 3D Interactif — Visages & Cyborgs HUD */}
+      <LoginBackground3D />
+
+      {/* Éléments de lueur d'ambiance */}
+      <div className="position-absolute top-50 start-50 translate-middle rounded-circle" style={{ width: '450px', height: '450px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%)', filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
+
+      {/* Carte de connexion compacte (largeur et longueur réduites) */}
+      <div className="login-card p-3 p-md-4 shadow-2xl rounded-4 border-0 position-relative" 
+           data-aos="zoom-in-up"
+           style={{ 
+             maxWidth: '380px', 
+             width: '85%', 
+             backgroundColor: 'var(--color-surface)',
+             border: '1px solid var(--color-border)',
+             zIndex: 1,
+             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+           }}>
         
-        <div className="text-center mb-5" data-aos="fade-down" data-aos-delay="200">
-          <h2 className="fw-bold mb-2" style={{ color: 'var(--color-text-main)' }}>Bon retour !</h2>
-          <p style={{ color: 'var(--color-text-muted)' }}>
-            Accédez à votre espace d'administration <span className="fw-bold" style={{ color: 'var(--color-primary)' }}>Portfolio</span>
+        <div className="text-center mb-3" data-aos="fade-down" data-aos-delay="200">
+          <h2 className="fw-bold fs-4 mb-1" style={{ color: 'var(--color-text-main)' }}>Bon retour !</h2>
+          <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
+            Espace admin <span className="fw-bold" style={{ color: 'var(--color-primary)' }}>Portfolio</span>
           </p>
         </div>
 
         {message && (
-          <div className="d-flex align-items-center p-3 mb-4 rounded-4" 
+          <div className="d-flex align-items-center p-2 mb-3 rounded-3" 
                 data-aos="fade"
                 style={{ 
                   backgroundColor: message.type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
-                  borderLeft: `5px solid ${message.type === 'success' ? 'var(--color-success)' : 'var(--color-danger)'}`,
+                  borderLeft: `4px solid ${message.type === 'success' ? 'var(--color-success)' : 'var(--color-danger)'}`,
                   color: message.type === 'success' ? 'var(--color-success)' : 'var(--color-danger)'
                 }}>
-            <span className="fs-4 me-3">
+            <span className="fs-5 me-2">
               {message.type === "success" ? <MdCheckCircleOutline /> : <MdErrorOutline />}
             </span>
             <span className="small fw-medium">{message.text}</span>
@@ -101,18 +207,27 @@ export default function LoginContent() {
         )}
 
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="mb-4" data-aos="fade-up" data-aos-delay="400">
-            <label htmlFor="login-email" className="form-label small fw-bold mb-2" style={{ color: 'var(--color-text-muted)' }}>Adresse Email</label>
-            <div className="input-group">
-              <span className="input-group-text border-0 px-3" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}><MdEmail /></span>
+          <div className="mb-3" data-aos="fade-up" data-aos-delay="300">
+            <label htmlFor="login-email" className="form-label small fw-bold mb-1" style={{ color: 'var(--color-text-muted)' }}>Adresse Email</label>
+            <div className="input-group input-group-sm">
+              <span className="input-group-text border-0 px-2" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}><MdEmail /></span>
               <input 
                 id="login-email"
                 type="email" 
-                className="form-control form-control-lg border-0 fs-6"
+                className="form-control border-0 fs-6 shadow-none"
                 style={{ 
-                  borderRadius: '0 12px 12px 0', 
+                  borderRadius: '0 8px 8px 0', 
                   backgroundColor: 'var(--color-border)', 
-                  color: 'var(--color-text-main)' 
+                  color: 'var(--color-text-main)',
+                  transition: 'all 0.3s ease'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-primary)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-border)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
                 name="email" 
                 placeholder="votre@email.com" 
@@ -123,21 +238,29 @@ export default function LoginContent() {
             </div>
           </div>
 
-          <div className="mb-3" data-aos="fade-up" data-aos-delay="600">
-            <div className="d-flex justify-content-between mb-2">
-              <label htmlFor="login-password" className="form-label small fw-bold" style={{ color: 'var(--color-text-muted)' }}>Mot de passe</label>
-              
+          <div className="mb-3" data-aos="fade-up" data-aos-delay="400">
+            <div className="d-flex justify-content-between mb-1">
+              <label htmlFor="login-password" className="form-label small fw-bold mb-0" style={{ color: 'var(--color-text-muted)' }}>Mot de passe</label>
             </div>
-            <div className="input-group">
-              <span className="input-group-text border-0 px-3" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}><MdLock /></span>
+            <div className="input-group input-group-sm">
+              <span className="input-group-text border-0 px-2" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}><MdLock /></span>
               <input 
                 id="login-password"
                 type="password" 
-                className="form-control form-control-lg border-0 fs-6"
+                className="form-control border-0 fs-6 shadow-none"
                 style={{ 
-                  borderRadius: '0 12px 12px 0', 
+                  borderRadius: '0 8px 8px 0', 
                   backgroundColor: 'var(--color-border)', 
-                  color: 'var(--color-text-main)' 
+                  color: 'var(--color-text-main)',
+                  transition: 'all 0.3s ease'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-primary)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-border)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
                 name="password" 
                 placeholder="••••••••" 
@@ -148,21 +271,30 @@ export default function LoginContent() {
             </div>
           </div>
 
-          <div data-aos="fade-up" data-aos-delay="800">
+          <div data-aos="fade-up" data-aos-delay="500">
             <button type="submit" 
-                    className="btn w-100 mt-4 py-3 rounded-pill fw-bold shadow-lg d-flex align-items-center justify-content-center gap-2" 
+                    className="btn w-100 mt-2 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" 
                     disabled={loading}
                     style={{ 
                       backgroundColor: 'var(--color-primary)', 
                       color: '#0f172a', 
                       border: 'none',
-                      fontSize: '1rem',
-                      height: '56px',
-                      minHeight: '56px',
-                      transition: 'background-color 0.2s'
-                    }}>
+                      fontSize: '0.9rem',
+                      height: '44px',
+                      minHeight: '44px',
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(56, 189, 248, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+            >
               {loading ? (
-                <span className="spinner-border spinner-border-sm" style={{ width: '1.2rem', height: '1.2rem' }}></span>
+                <span className="spinner-border spinner-border-sm" style={{ width: '1rem', height: '1rem' }}></span>
               ) : (
                 <>Se connecter <MdArrowForward /></>
               )}

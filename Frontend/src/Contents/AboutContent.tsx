@@ -1,11 +1,93 @@
-import React, { useEffect } from 'react';
-import { FaGraduationCap, FaBriefcase, FaUserCheck, FaMapMarkerAlt, FaCode, FaRocket, FaGamepad, FaPalette } from 'react-icons/fa';
+import React, { useEffect, useRef } from 'react';
+import { FaGraduationCap, FaBriefcase, FaUserCheck, FaMapMarkerAlt, FaRocket, FaGamepad, FaPalette } from 'react-icons/fa';
 
 // Déclaration de type pour contourner l'absence de types officiels dans 'aos'
 //@ts-ignore
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+
+import { Canvas, useFrame } from '@react-three/fiber';
+
 import photoVeste from '../assets/photo veste.jpeg';
+
+/* ============================================================
+   FOND 3D — Scène animée en arrière-plan (React Three Fiber)
+   ============================================================ */
+function FloatingShape({
+  position,
+  geometry,
+  speed,
+  color
+}: {
+  position: [number, number, number];
+  geometry: 'icosahedron' | 'torus' | 'octahedron';
+  speed: number;
+  color: string;
+}) {
+  const meshRef = useRef<any>(null);
+
+  useFrame(({ clock }) => {
+    if (!meshRef.current) return;
+    const t = clock.getElapsedTime();
+    meshRef.current.rotation.x = t * speed * 0.3;
+    meshRef.current.rotation.y = t * speed * 0.5;
+    meshRef.current.position.y = position[1] + Math.sin(t * speed) * 0.4;
+  });
+
+  return (
+    <mesh ref={meshRef} position={position}>
+      {geometry === 'icosahedron' && <icosahedronGeometry args={[1, 0]} />}
+      {geometry === 'torus' && <torusGeometry args={[0.8, 0.28, 16, 100]} />}
+      {geometry === 'octahedron' && <octahedronGeometry args={[1, 0]} />}
+      <meshBasicMaterial color={color} wireframe transparent opacity={0.25} />
+    </mesh>
+  );
+}
+
+function ParallaxRig({ children }: { children: React.ReactNode }) {
+  const groupRef = useRef<any>(null);
+  const mouse = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, []);
+
+  useFrame(() => {
+    if (!groupRef.current) return;
+    groupRef.current.rotation.y += (mouse.current.x * 0.15 - groupRef.current.rotation.y) * 0.02;
+    groupRef.current.rotation.x += (-mouse.current.y * 0.1 - groupRef.current.rotation.x) * 0.02;
+  });
+
+  return <group ref={groupRef}>{children}</group>;
+}
+
+function AboutBackground3D() {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+        overflow: 'hidden'
+      }}
+    >
+      <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={[1, 1.5]}>
+        <ParallaxRig>
+          <FloatingShape position={[-5, 2, -3]} geometry="icosahedron" speed={0.6} color="#38bdf8" />
+          <FloatingShape position={[5, -2, -4]} geometry="torus" speed={0.4} color="#22c55e" />
+          <FloatingShape position={[3, 3, -5]} geometry="octahedron" speed={0.8} color="#60a5fa" />
+          <FloatingShape position={[-4, -3, -3]} geometry="octahedron" speed={0.5} color="#4ade80" />
+        </ParallaxRig>
+      </Canvas>
+    </div>
+  );
+}
 
 export default function AboutContent() {
   useEffect(() => {
@@ -19,7 +101,10 @@ export default function AboutContent() {
   return (
     <section className="py-5 text-light position-relative overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', minHeight: '100vh' }}>
       
-      {/* Éléments d'arrière-plan futuristes / effet profondeur 4D subtil */}
+      {/* Fond 3D Interactif Three.js (Arrière-plan uniquement) */}
+      <AboutBackground3D />
+
+      {/* Éléments d'arrière-plan futuristes / effet profondeur subtil */}
       <div className="position-absolute top-0 start-50 translate-middle-x rounded-circle" style={{ width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }}></div>
       <div className="position-absolute bottom-0 end-0 rounded-circle" style={{ width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(34, 197, 94, 0.04) 0%, transparent 70%)', filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
 
@@ -40,11 +125,11 @@ export default function AboutContent() {
           </p>
         </div>
 
-        {/* Section 1 : Profil et Informations (Photo principale grand format optimisée) */}
+        {/* Section 1 : Profil et Informations (Photo principale grand format classique) */}
         <div className="row g-4 align-items-center mb-5">
           <div className="col-lg-5 text-center" data-aos="fade-right" data-aos-delay="100">
             <div className="position-relative d-inline-block w-100" style={{ maxWidth: '380px' }}>
-              {/* Effet de lueur 4D en arrière-plan */}
+              {/* Effet de lueur en arrière-plan */}
               <div 
                 className="position-absolute top-50 start-50 translate-middle rounded-4"
                 style={{ 
@@ -56,23 +141,14 @@ export default function AboutContent() {
                   transform: 'scale(1.08)'
                 }}
               ></div>
+
               <div 
-                className="p-3 rounded-4 position-relative overflow-hidden" 
+                className="p-3 rounded-4 position-relative overflow-hidden shadow-2xl" 
                 style={{ 
                   backgroundColor: 'var(--color-surface)', 
                   border: '1px solid var(--color-border)',
                   boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                  zIndex: 1,
-                  transform: 'perspective(1000px) rotateY(-2deg) rotateX(2deg)',
-                  transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 35px 70px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'perspective(1000px) rotateY(-2deg) rotateX(2deg) translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+                  zIndex: 1
                 }}
               >
                 <div className="overflow-hidden rounded-3 position-relative shadow-lg" style={{ minHeight: '420px' }}>
@@ -94,21 +170,11 @@ export default function AboutContent() {
 
           <div className="col-lg-7" data-aos="fade-left" data-aos-delay="200">
             <div 
-              className="p-4 p-lg-5 rounded-4 h-100 position-relative" 
+              className="p-4 p-lg-5 rounded-4 h-100 position-relative shadow-2xl" 
               style={{ 
                 backgroundColor: 'var(--color-surface)', 
                 border: '1px solid var(--color-border)',
-                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-                transform: 'perspective(1000px) rotateY(1deg) rotateX(1deg)',
-                transition: 'all 0.5s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) translateY(-5px)';
-                e.currentTarget.style.borderColor = 'var(--color-primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'perspective(1000px) rotateY(1deg) rotateX(1deg) translateY(0)';
-                e.currentTarget.style.borderColor = 'var(--color-border)';
+                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
               }}
             >
               <h3 className="fw-bold fs-4 mb-3 d-flex align-items-center gap-2" style={{ color: 'var(--color-primary)' }}>
@@ -128,10 +194,10 @@ export default function AboutContent() {
           </div>
         </div>
 
-        {/* Section 2 : Parcours Académique Détaillé avec Illustration Grand Format */}
+        {/* Section 2 : Parcours Académique Détaillé */}
         <div className="mb-5" data-aos="fade-up" data-aos-delay="300">
           <div 
-            className="p-4 p-lg-5 rounded-4" 
+            className="p-4 p-lg-5 rounded-4 shadow-2xl" 
             style={{ 
               backgroundColor: 'var(--color-surface)', 
               border: '1px solid var(--color-border)',
@@ -145,29 +211,17 @@ export default function AboutContent() {
                   <FaGraduationCap /> Parcours Académique & International
                 </h3>
               </div>
-             
             </div>
             
             <div className="row g-4">
               {/* Étape 3 */}
               <div className="col-md-6" data-aos="fade-up" data-aos-delay="350">
                 <div 
-                  className="p-4 rounded-3 h-100" 
+                  className="p-4 rounded-3 h-100 shadow-sm" 
                   style={{ 
                     backgroundColor: 'var(--color-bg)', 
                     border: '1px solid var(--color-border)', 
-                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
-                    boxShadow: '0 5px 15px rgba(0,0,0,0.2)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.01)';
-                    e.currentTarget.style.borderColor = 'var(--color-success)';
-                    e.currentTarget.style.boxShadow = '0 15px 30px rgba(34, 197, 94, 0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.borderColor = 'var(--color-border)';
-                    e.currentTarget.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)'
                   }}
                 >
                   <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>2023 – 2024 (Première année)</span>
@@ -182,22 +236,11 @@ export default function AboutContent() {
               {/* Étape 4 */}
               <div className="col-md-6" data-aos="fade-up" data-aos-delay="400">
                 <div 
-                  className="p-4 rounded-3 h-100" 
+                  className="p-4 rounded-3 h-100 shadow-sm" 
                   style={{ 
                     backgroundColor: 'var(--color-bg)', 
                     border: '1px solid var(--color-border)', 
-                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
-                    boxShadow: '0 5px 15px rgba(0,0,0,0.2)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.01)';
-                    e.currentTarget.style.borderColor = 'var(--color-success)';
-                    e.currentTarget.style.boxShadow = '0 15px 30px rgba(34, 197, 94, 0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.borderColor = 'var(--color-border)';
-                    e.currentTarget.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)'
                   }}
                 >
                   <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>2024 – 2025 (Deuxième année)</span>
@@ -212,20 +255,11 @@ export default function AboutContent() {
               {/* Étape 5 */}
               <div className="col-12" data-aos="fade-up" data-aos-delay="450">
                 <div 
-                  className="p-4 rounded-3" 
+                  className="p-4 rounded-3 shadow-sm" 
                   style={{ 
                     backgroundColor: 'var(--color-bg)', 
                     border: '1px solid var(--color-primary)', 
-                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)',
-                    boxShadow: '0 5px 20px rgba(56, 189, 248, 0.1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.005)';
-                    e.currentTarget.style.boxShadow = '0 20px 40px rgba(56, 189, 248, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 5px 20px rgba(56, 189, 248, 0.1)';
+                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)'
                   }}
                 >
                   <span className="badge mb-2 px-3 py-1" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-bg)', fontWeight: 'bold' }}>2025 – 2026 (Troisième année – En cours)</span>
@@ -241,11 +275,11 @@ export default function AboutContent() {
           </div>
         </div>
 
-        {/* Section 3 : Expérience Professionnelle (Stage Levegi) avec Illustration Grand Format */}
+        {/* Section 3 : Expérience Professionnelle (Stage Levegi) */}
         <div className="row justify-content-center mb-5" data-aos="fade-up" data-aos-delay="500">
           <div className="col-12">
             <div 
-              className="p-4 p-lg-5 rounded-4" 
+              className="p-4 p-lg-5 rounded-4 shadow-2xl" 
               style={{ 
                 backgroundColor: 'var(--color-surface)', 
                 border: '1px solid var(--color-border)',
@@ -259,28 +293,14 @@ export default function AboutContent() {
                     <FaBriefcase /> Expérience Professionnelle
                   </h3>
                 </div>
-                <div className="col-lg-5 text-lg-end mt-3 mt-lg-0">
-                  
-                </div>
               </div>
 
               <div 
-                className="p-4 rounded-3" 
+                className="p-4 rounded-3 shadow-sm" 
                 style={{ 
                   backgroundColor: 'var(--color-bg)', 
                   border: '1px solid var(--color-border)', 
-                  transition: 'all 0.4s ease',
-                  boxShadow: '0 5px 15px rgba(0,0,0,0.2)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.borderColor = '#eab308';
-                  e.currentTarget.style.boxShadow = '0 15px 30px rgba(234, 179, 8, 0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderColor = 'var(--color-border)';
-                  e.currentTarget.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+                  transition: 'all 0.4s ease'
                 }}
               >
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
