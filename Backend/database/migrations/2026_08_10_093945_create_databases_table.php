@@ -13,9 +13,12 @@ return new class extends Migration
     {
         Schema::create('databases', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            // Ajout de ->unique() pour s'assurer qu'un nom de base de données n'existe qu'une seule fois
+            $table->string('name')->unique(); 
             $table->enum('type', ['Relationnelle', 'NoSQL']);
             $table->string('level');
+            // Ajout de la colonne pour l'icône ou l'image (nullable au cas où ce n'est pas obligatoire)
+            $table->string('icon')->nullable(); 
             $table->timestamps();
         });
     }

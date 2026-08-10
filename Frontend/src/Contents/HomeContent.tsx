@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FaGithub, FaLinkedin, FaArrowRight } from 'react-icons/fa';
 
@@ -6,7 +6,143 @@ import { FaGithub, FaLinkedin, FaArrowRight } from 'react-icons/fa';
 //@ts-ignore
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+
+import { Canvas, useFrame } from '@react-three/fiber';
+import { 
+  motion, 
+  useMotionValue, 
+  useTransform, 
+  useSpring 
+} from 'framer-motion';
+
 import photo from '../assets/Photo.png';
+
+/* ============================================================
+   FOND 3D — Scène animée en arrière-plan (React Three Fiber)
+   ============================================================ */
+function FloatingShape({
+  position,
+  geometry,
+  speed,
+  color
+}: {
+  position: [number, number, number];
+  geometry: 'icosahedron' | 'torus' | 'octahedron';
+  speed: number;
+  color: string;
+}) {
+  const meshRef = useRef<any>(null);
+
+  useFrame(({ clock }) => {
+    if (!meshRef.current) return;
+    const t = clock.getElapsedTime();
+    meshRef.current.rotation.x = t * speed * 0.3;
+    meshRef.current.rotation.y = t * speed * 0.5;
+    meshRef.current.position.y = position[1] + Math.sin(t * speed) * 0.4;
+  });
+
+  return (
+    <mesh ref={meshRef} position={position}>
+      {geometry === 'icosahedron' && <icosahedronGeometry args={[1, 0]} />}
+      {geometry === 'torus' && <torusGeometry args={[0.8, 0.28, 16, 100]} />}
+      {geometry === 'octahedron' && <octahedronGeometry args={[1, 0]} />}
+      <meshBasicMaterial color={color} wireframe transparent opacity={0.25} />
+    </mesh>
+  );
+}
+
+function ParallaxRig({ children }: { children: React.ReactNode }) {
+  const groupRef = useRef<any>(null);
+  const mouse = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, []);
+
+  useFrame(() => {
+    if (!groupRef.current) return;
+    groupRef.current.rotation.y += (mouse.current.x * 0.15 - groupRef.current.rotation.y) * 0.02;
+    groupRef.current.rotation.x += (-mouse.current.y * 0.1 - groupRef.current.rotation.x) * 0.02;
+  });
+
+  return <group ref={groupRef}>{children}</group>;
+}
+
+function HomeBackground3D() {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+        overflow: 'hidden'
+      }}
+    >
+      <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={[1, 1.5]}>
+        <ParallaxRig>
+          <FloatingShape position={[-4, 1.5, -2]} geometry="icosahedron" speed={0.6} color="#60a5fa" />
+          <FloatingShape position={[4.5, -1, -3]} geometry="torus" speed={0.4} color="#3b82f6" />
+          <FloatingShape position={[2.5, 2.5, -4]} geometry="octahedron" speed={0.8} color="#93c5fd" />
+          <FloatingShape position={[-3.5, -2, -3]} geometry="octahedron" speed={0.5} color="#2563eb" />
+        </ParallaxRig>
+      </Canvas>
+    </div>
+  );
+}
+
+/* ============================================================
+   CARTE PHOTO AVEC EFFET TILT 3D INTERACTIF (Framer Motion)
+   ============================================================ */
+function PhotoTiltCard({ children }: { children: React.ReactNode }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [12, -12]), {
+    stiffness: 200,
+    damping: 20
+  });
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-12, 12]), {
+    stiffness: 200,
+    damping: 20
+  });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateX,
+        rotateY,
+        transformStyle: 'preserve-3d',
+        transformPerspective: 900,
+        display: 'inline-block'
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function HomeContent() {
   // États pour l'effet de frappe dynamique (sur la profession / rôles)
@@ -59,22 +195,8 @@ export default function HomeContent() {
 
   return (
     <>
-      {/* Animations CSS injectées pour le flottement et le curseur clignotant */}
+      {/* Animations CSS injectées pour le curseur clignotant */}
       <style>{`
-        @keyframes floatAndTilt {
-          0% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          50% {
-            transform: translateY(-12px) rotate(2deg);
-          }
-          100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-        }
-        .animate-tilt-float {
-          animation: floatAndTilt 6s ease-in-out infinite;
-        }
         .cursor-blink {
           display: inline-block;
           background-color: var(--color-success);
@@ -88,8 +210,12 @@ export default function HomeContent() {
         }
       `}</style>
 
-      <div className="home-page-wrapper d-flex align-items-center" style={{ minHeight: '100vh', paddingTop: '80px', backgroundColor: 'var(--color-bg)' }}>
-        <div className="container py-5">
+      <div className="home-page-wrapper d-flex align-items-center position-relative" style={{ minHeight: '100vh', paddingTop: '80px', backgroundColor: 'var(--color-bg)', overflow: 'hidden' }}>
+        
+        {/* Fond 3D interactif avec Three.js */}
+        <HomeBackground3D />
+
+        <div className="container py-5 position-relative" style={{ zIndex: 1 }}>
           <div className="row align-items-center g-5">
             
             {/* Colonne de gauche : Texte et Présentation */}
@@ -162,7 +288,7 @@ export default function HomeContent() {
 
             </div>
 
-            {/* Colonne de droite : Photo de profil stylisée et animée */}
+            {/* Colonne de droite : Photo de profil avec effet 3D Tilt interactif & fond lumineux */}
             <div className="col-lg-5 text-center" data-aos="zoom-in" data-aos-delay="300">
               <div className="position-relative d-inline-block">
                 
@@ -172,30 +298,32 @@ export default function HomeContent() {
                   style={{ 
                     width: '320px', 
                     height: '320px', 
-                    background: 'radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, rgba(34, 197, 94, 0.05) 70%)',
+                    background: 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(34, 197, 94, 0.05) 70%)',
                     zIndex: 0,
-                    filter: 'blur(20px)'
+                    filter: 'blur(25px)'
                   }}
                 ></div>
                 
-                {/* Carte contenant l'image avec l'animation de rotation/flottement */}
-                <div 
-                  className="p-3 rounded-4 position-relative shadow-2xl animate-tilt-float" 
-                  style={{ 
-                    backgroundColor: 'var(--color-surface)', 
-                    border: `1px solid var(--color-border)`,
-                    zIndex: 1,
-                    maxWidth: '360px',
-                    margin: '0 auto'
-                  }}
-                >
-                  <img 
-                    src={photo} 
-                    alt="Talla Kouetche Kakabi Christian" 
-                    className="img-fluid"
-                    style={{ width: '100%' }}
-                  />
-                </div>
+                {/* Carte photo encapsulée dans le composant de Tilt 3D */}
+                <PhotoTiltCard>
+                  <div 
+                    className="p-3 rounded-4 position-relative shadow-2xl" 
+                    style={{ 
+                      backgroundColor: 'var(--color-surface)', 
+                      border: `1px solid var(--color-border)`,
+                      zIndex: 1,
+                      maxWidth: '360px',
+                      margin: '0 auto'
+                    }}
+                  >
+                    <img 
+                      src={photo} 
+                      alt="Talla Kouetche Kakabi Christian" 
+                      className="img-fluid rounded-3"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </PhotoTiltCard>
 
               </div>
             </div>

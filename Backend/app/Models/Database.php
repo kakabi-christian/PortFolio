@@ -15,5 +15,6 @@ class Database extends Model
         'name',
         'type',
         'level',
+        'icon',
     ];
 }

@@ -1,12 +1,25 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FrameworkController;
+use App\Http\Controllers\Api\DatabaseController;
+use App\Http\Controllers\Api\ToolController; // Importation du controller Tool
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Routes publiques d'authentification
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Routes publiques pour lister ou afficher les ressources (accessibles sans connexion)
+Route::get('/frameworks', [FrameworkController::class, 'index']);
+Route::get('/frameworks/{framework}', [FrameworkController::class, 'show']);
+
+Route::get('/databases', [DatabaseController::class, 'index']);
+Route::get('/databases/{database}', [DatabaseController::class, 'show']);
+
+Route::get('/tools', [ToolController::class, 'index']);
+Route::get('/tools/{tool}', [ToolController::class, 'show']);
 
 // Routes protégées par Sanctum
 Route::middleware('auth:sanctum')->group(function () {
@@ -15,4 +28,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Gestion complète des Frameworks (hors index et show)
+    Route::apiResource('frameworks', FrameworkController::class)->except(['index', 'show']);
+
+    // Gestion complète des Databases (hors index et show)
+    Route::apiResource('databases', DatabaseController::class)->except(['index', 'show']);
+
+    // Gestion complète des Tools (hors index et show)
+    Route::apiResource('tools', ToolController::class)->except(['index', 'show']);
 });

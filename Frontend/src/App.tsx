@@ -5,6 +5,11 @@ import Skills from './Pages/Skills';
 import Contact from './Pages/Contact';
 import Project from './Pages/Project';
 import Login from './Pages/Login';
+import Dashboard from './Pages/Dashboard';
+import Profile from './Pages/Admin/Profile';
+import FrameworkPage from './Pages/Admin/FrameworkPage';
+import DatabasePage from './Pages/Admin/DatabasePage';
+import ToolPage from './Pages/Admin/ToolPage';
 
 function App() {
   return (
@@ -22,9 +27,12 @@ function App() {
          
 
           {/* Routes Admin (avec enfants) */}
-          {/* <Route path="/admin/*" element={<AdminDashboard />}>
-            <Route path="type-documents" element={<TypeDocumentPage />} />
-          </Route> */}
+           <Route path="/admin/*" element={<Dashboard />}>
+            <Route path="profile" element={<Profile />} />
+            <Route path="frameworks" element={<FrameworkPage />} />
+            <Route path="tools" element={<ToolPage />} />
+            <Route path="databases" element={<DatabasePage />} />
+          </Route> 
 
         </Routes>
       </main>

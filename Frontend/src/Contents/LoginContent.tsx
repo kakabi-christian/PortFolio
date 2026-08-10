@@ -44,9 +44,9 @@ export default function LoginContent() {
     try {
       const response = await authService.login(formData);
       if (response.user.role === 'admin') {
-        navigate("/admin/type-documents");
+        navigate("/admin/profile");
       } else {
-        navigate("/user/kyc"); 
+        navigate("/");
       }
     } catch (error: any) {
       const status = error.response?.status;
@@ -126,9 +126,7 @@ export default function LoginContent() {
           <div className="mb-3" data-aos="fade-up" data-aos-delay="600">
             <div className="d-flex justify-content-between mb-2">
               <label htmlFor="login-password" className="form-label small fw-bold" style={{ color: 'var(--color-text-muted)' }}>Mot de passe</label>
-              <Link to="/forgot-password" style={{ color: 'var(--color-primary)' }} className="small fw-bold text-decoration-none">
-                Oublié ?
-              </Link>
+              
             </div>
             <div className="input-group">
               <span className="input-group-text border-0 px-3" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}><MdLock /></span>
