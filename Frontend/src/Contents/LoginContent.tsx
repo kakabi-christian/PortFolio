@@ -6,7 +6,6 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { authService } from "../Services/AuthService";
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 
 /* ============================================================
@@ -51,8 +50,55 @@ function useScrollDepth() {
 }
 
 /* ============================================================
-   FOND 3D — ÉTOILES / PARTICULES ET NOYAU IMMERSIF (React Three Fiber)
+   FOND 3D — VISAGE CYBORG / HUD HIGH-TECH (React Three Fiber)
    ============================================================ */
+function CyborgHeadHUD({
+  position,
+  rotationSpeed,
+  color
+}: {
+  position: [number, number, number];
+  rotationSpeed: number;
+  color: string;
+}) {
+  const groupRef = useRef<any>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.getElapsedTime();
+    groupRef.current.rotation.y = t * rotationSpeed;
+    groupRef.current.position.y = position[1] + Math.sin(t * 1.5) * 0.2;
+  });
+
+  return (
+    <group ref={groupRef} position={position}>
+      {/* Structure crânienne / Casque Cyborg abstrait (Icosaèdre étiré / Capsule) */}
+      <mesh position={[0, 0.2, 0]}>
+        <icosahedronGeometry args={[1.1, 1]} />
+        <meshBasicMaterial color={color} wireframe transparent opacity={0.35} />
+      </mesh>
+
+      {/* Visière / Yeux lumineux HUD */}
+      <mesh position={[0, 0.25, 0.85]}>
+        <boxGeometry args={[1.1, 0.2, 0.2]} />
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.8} />
+      </mesh>
+
+      {/* Anneau de données holographique autour du cyborg */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+        <torusGeometry args={[1.6, 0.03, 16, 60]} />
+        <meshBasicMaterial color={color} wireframe transparent opacity={0.4} />
+      </mesh>
+
+      {/* Module de la mâchoire / Nuage de points techniques */}
+      <mesh position={[0, -0.6, 0]}>
+        <octahedronGeometry args={[0.7, 0]} />
+        <meshBasicMaterial color="#22c55e" wireframe transparent opacity={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
 function SkillCore({ accent }: { accent: string }) {
   const ref = useRef<THREE.Mesh>(null);
   const current = useRef(new THREE.Color(accent));
@@ -145,6 +191,10 @@ function LoginBackground3D() {
     >
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <SceneRig mouse={mouse} scroll={scroll}>
+          {/* Visage / Cyborgs HUD combinés avec le noyau et les particules */}
+          <CyborgHeadHUD position={[0, 0, -2]} rotationSpeed={0.4} color="#38bdf8" />
+          <CyborgHeadHUD position={[-4, 1.5, -4]} rotationSpeed={-0.3} color="#22c55e" />
+          <CyborgHeadHUD position={[4, -1.5, -4]} rotationSpeed={0.5} color="#60a5fa" />
           <SkillCore accent={accent} />
           <Particles count={isMobile ? 50 : 130} accent={accent} />
         </SceneRig>
@@ -216,7 +266,7 @@ export default function LoginContent() {
     <div className="login-page-wrapper d-flex align-items-center justify-content-center position-relative overflow-hidden" 
          style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
       
-      {/* Fond 3D Interactif — Étoiles / Particules */}
+      {/* Fond 3D Interactif — Visages Cyborgs & Particules */}
       <LoginBackground3D />
 
       {/* Éléments de lueur d'ambiance */}
