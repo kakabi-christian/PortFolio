@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\FrameworkController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\ToolController; // Importation du controller Tool
 use App\Http\Controllers\Api\ContactController; // Importation du controller Contact
+use App\Http\Controllers\Api\ProjectController; // Importation du controller Project
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,10 @@ Route::get('/databases/{database}', [DatabaseController::class, 'show']);
 
 Route::get('/tools', [ToolController::class, 'index']);
 Route::get('/tools/{tool}', [ToolController::class, 'show']);
+
+// Routes publiques pour les projets
+Route::get('/projects', [ProjectController::class, 'index']);
+Route::get('/projects/{project}', [ProjectController::class, 'show']);
 
 // Route publique pour envoyer un message depuis le formulaire de contact du portfolio
 Route::post('/contact', [ContactController::class, 'store']);
@@ -41,6 +46,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Gestion complète des Tools (hors index et show)
     Route::apiResource('tools', ToolController::class)->except(['index', 'show']);
+
+    // Gestion complète des Projects (hors index et show)
+    Route::apiResource('projects', ProjectController::class)->except(['index', 'show']);
 
     // --- Routes du Dashboard Admin pour les Contacts ---
     Route::get('/admin/contacts', [ContactController::class, 'index']);

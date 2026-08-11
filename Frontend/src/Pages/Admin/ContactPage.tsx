@@ -15,6 +15,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { ContactService } from '../../Services/ContactService';
 import type { Contact, ContactReplyData } from '../../Models/Contact';
+import photo from '../../assets/ContactPeople.png'
 
 export default function ContactPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);

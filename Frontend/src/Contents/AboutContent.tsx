@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { FaGraduationCap, FaBriefcase, FaUserCheck, FaMapMarkerAlt, FaRocket, FaGamepad, FaPalette } from 'react-icons/fa';
 
 // Déclaration de type pour contourner l'absence de types officiels dans 'aos'
@@ -6,12 +6,57 @@ import { FaGraduationCap, FaBriefcase, FaUserCheck, FaMapMarkerAlt, FaRocket, Fa
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
+import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
+import { Line } from '@react-three/drei';
 
 import photoVeste from '../assets/photo veste.jpeg';
 
+type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
+
 /* ============================================================
-   FOND 3D — Scène animée en arrière-plan (React Three Fiber)
+   HOOKS UTILITAIRES POUR LE FOND 3D
+   ============================================================ */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState<boolean>(
+    () => typeof window !== 'undefined' && window.innerWidth < breakpoint
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+function useMousePosition() {
+  const pos = useRef({ x: 0, y: 0 });
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      pos.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pos.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, []);
+  return pos;
+}
+
+function useScrollDepth() {
+  const depth = useRef(0);
+  useEffect(() => {
+    const handleScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      depth.current = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  return depth;
+}
+
+/* ============================================================
+   FOND 3D — Scène immersive interactive (identique aux autres pages)
    ============================================================ */
 function FloatingShape({
   position,
@@ -20,18 +65,23 @@ function FloatingShape({
   color
 }: {
   position: [number, number, number];
-  geometry: 'icosahedron' | 'torus' | 'octahedron';
+  geometry: GeometryKind;
   speed: number;
   color: string;
 }) {
-  const meshRef = useRef<any>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const current = useRef(new THREE.Color(color));
+  const target = useMemo(() => new THREE.Color(color), [color]);
 
   useFrame(({ clock }) => {
-    if (!meshRef.current) return;
+    const mesh = meshRef.current;
+    if (!mesh) return;
     const t = clock.getElapsedTime();
-    meshRef.current.rotation.x = t * speed * 0.3;
-    meshRef.current.rotation.y = t * speed * 0.5;
-    meshRef.current.position.y = position[1] + Math.sin(t * speed) * 0.4;
+    mesh.rotation.x = t * speed * 0.3;
+    mesh.rotation.y = t * speed * 0.5;
+    mesh.position.y = position[1] + Math.sin(t * speed) * 0.4;
+    current.current.lerp(target, 0.03);
+    (mesh.material as THREE.MeshBasicMaterial).color.copy(current.current);
   });
 
   return (
@@ -39,51 +89,133 @@ function FloatingShape({
       {geometry === 'icosahedron' && <icosahedronGeometry args={[1, 0]} />}
       {geometry === 'torus' && <torusGeometry args={[0.8, 0.28, 16, 100]} />}
       {geometry === 'octahedron' && <octahedronGeometry args={[1, 0]} />}
-      <meshBasicMaterial color={color} wireframe transparent opacity={0.25} />
+      <meshBasicMaterial color={color} wireframe transparent opacity={0.32} />
     </mesh>
   );
 }
 
-function ParallaxRig({ children }: { children: React.ReactNode }) {
-  const groupRef = useRef<any>(null);
-  const mouse = useRef({ x: 0, y: 0 });
+function SkillCore({ accent }: { accent: string }) {
+  const ref = useRef<THREE.Mesh>(null);
+  const current = useRef(new THREE.Color(accent));
+  const target = useMemo(() => new THREE.Color(accent), [accent]);
 
-  useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
-      mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.current.y = (e.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, []);
+  useFrame(({ clock }) => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const t = clock.getElapsedTime();
+    mesh.scale.setScalar(1 + Math.sin(t * 0.6) * 0.06);
+    mesh.rotation.y = t * 0.15;
+    mesh.rotation.x = t * 0.08;
+    current.current.lerp(target, 0.03);
+    (mesh.material as THREE.MeshBasicMaterial).color.copy(current.current);
+  });
 
-  useFrame(() => {
-    if (!groupRef.current) return;
-    groupRef.current.rotation.y += (mouse.current.x * 0.15 - groupRef.current.rotation.y) * 0.02;
-    groupRef.current.rotation.x += (-mouse.current.y * 0.1 - groupRef.current.rotation.x) * 0.02;
+  return (
+    <mesh ref={ref} position={[0, 0, -1.5]}>
+      <icosahedronGeometry args={[1.6, 1]} />
+      <meshBasicMaterial color={accent} wireframe transparent opacity={0.16} />
+    </mesh>
+  );
+}
+
+function ConnectionLines({ points, accent }: { points: [number, number, number][]; accent: string }) {
+  const segments = useMemo(
+    () => points.map((p) => [p, [0, 0, -1.5] as [number, number, number]] as [[number, number, number], [number, number, number]]),
+    [points]
+  );
+  return (
+    <>
+      {segments.map((seg, i) => (
+        <Line key={i} points={seg} color={accent} transparent opacity={0.14} lineWidth={1} />
+      ))}
+    </>
+  );
+}
+
+function Particles({ count, accent }: { count: number; accent: string }) {
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] = (Math.random() - 0.5) * 16;
+      arr[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 8 - 4;
+    }
+    return arr;
+  }, [count]);
+  const ref = useRef<THREE.Points>(null);
+
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.rotation.y = clock.getElapsedTime() * 0.015;
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial color={accent} size={0.03} transparent opacity={0.5} sizeAttenuation />
+    </points>
+  );
+}
+
+function SceneRig({
+  children,
+  mouse,
+  scroll
+}: {
+  children: React.ReactNode;
+  mouse: React.MutableRefObject<{ x: number; y: number }>;
+  scroll: React.MutableRefObject<number>;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ camera }) => {
+    const group = groupRef.current;
+    if (!group) return;
+    group.rotation.y += (mouse.current.x * 0.15 - group.rotation.y) * 0.02;
+    group.rotation.x += (-mouse.current.y * 0.1 - group.rotation.x) * 0.02;
+    const targetZ = 8 - scroll.current * 1.4;
+    camera.position.z += (targetZ - camera.position.z) * 0.03;
   });
 
   return <group ref={groupRef}>{children}</group>;
 }
 
 function AboutBackground3D() {
+  const isMobile = useIsMobile();
+  const mouse = useMousePosition();
+  const scroll = useScrollDepth();
+  const accent = '#38bdf8';
+
+  const shapePositions = useMemo<[number, number, number][]>(
+    () => [
+      [-5, 2, -3],
+      [5, -2, -4],
+      [3, 3, -5],
+      [-4, -3, -3]
+    ],
+    []
+  );
+  const visibleShapes = isMobile ? shapePositions.slice(0, 2) : shapePositions;
+  const geometries: GeometryKind[] = ['icosahedron', 'torus', 'octahedron', 'octahedron'];
+
   return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: 'none',
-        overflow: 'hidden'
-      }}
-    >
-      <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={[1, 1.5]}>
-        <ParallaxRig>
-          <FloatingShape position={[-5, 2, -3]} geometry="icosahedron" speed={0.6} color="#38bdf8" />
-          <FloatingShape position={[5, -2, -4]} geometry="torus" speed={0.4} color="#22c55e" />
-          <FloatingShape position={[3, 3, -5]} geometry="octahedron" speed={0.8} color="#60a5fa" />
-          <FloatingShape position={[-4, -3, -3]} geometry="octahedron" speed={0.5} color="#4ade80" />
-        </ParallaxRig>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+      <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
+        <SceneRig mouse={mouse} scroll={scroll}>
+          <SkillCore accent={accent} />
+          <Particles count={isMobile ? 50 : 140} accent={accent} />
+          {visibleShapes.map((pos, i) => (
+            <FloatingShape
+              key={i}
+              position={pos}
+              geometry={geometries[i % geometries.length]}
+              speed={0.4 + i * 0.12}
+              color={i % 2 === 0 ? accent : '#22c55e'}
+            />
+          ))}
+          {!isMobile && <ConnectionLines points={visibleShapes} accent={accent} />}
+        </SceneRig>
       </Canvas>
     </div>
   );
@@ -99,12 +231,12 @@ export default function AboutContent() {
   }, []);
 
   return (
-    <section className="py-5 text-light position-relative overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', minHeight: '100vh' }}>
+    <section className="py-5 text-light position-relative overflow-hidden" style={{ backgroundColor: '#0f172a', minHeight: '100vh' }}>
       
-      {/* Fond 3D Interactif Three.js (Arrière-plan uniquement) */}
+      {/* Fond 3D Interactif Three.js unifié */}
       <AboutBackground3D />
 
-      {/* Éléments d'arrière-plan futuristes / effet profondeur subtil */}
+      {/* Éléments d'arrière-plan lumineux subtils */}
       <div className="position-absolute top-0 start-50 translate-middle-x rounded-circle" style={{ width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }}></div>
       <div className="position-absolute bottom-0 end-0 rounded-circle" style={{ width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(34, 197, 94, 0.04) 0%, transparent 70%)', filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
 
@@ -125,11 +257,10 @@ export default function AboutContent() {
           </p>
         </div>
 
-        {/* Section 1 : Profil et Informations (Photo principale grand format classique) */}
+        {/* Section 1 : Profil et Informations */}
         <div className="row g-4 align-items-center mb-5">
           <div className="col-lg-5 text-center" data-aos="fade-right" data-aos-delay="100">
             <div className="position-relative d-inline-block w-100" style={{ maxWidth: '380px' }}>
-              {/* Effet de lueur en arrière-plan */}
               <div 
                 className="position-absolute top-50 start-50 translate-middle rounded-4"
                 style={{ 
@@ -204,7 +335,6 @@ export default function AboutContent() {
               boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)'
             }}
           >
-            
             <div className="row align-items-center mb-4">
               <div className="col-lg-7">
                 <h3 className="fw-bold fs-4 m-0 d-flex align-items-center gap-2" style={{ color: 'var(--color-success)' }}>
@@ -214,14 +344,13 @@ export default function AboutContent() {
             </div>
             
             <div className="row g-4">
-              {/* Étape 3 */}
+              {/* Étape 1 */}
               <div className="col-md-6" data-aos="fade-up" data-aos-delay="350">
                 <div 
                   className="p-4 rounded-3 h-100 shadow-sm" 
                   style={{ 
                     backgroundColor: 'var(--color-bg)', 
-                    border: '1px solid var(--color-border)', 
-                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)'
+                    border: '1px solid var(--color-border)'
                   }}
                 >
                   <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>2023 – 2024 (Première année)</span>
@@ -233,14 +362,13 @@ export default function AboutContent() {
                 </div>
               </div>
 
-              {/* Étape 4 */}
+              {/* Étape 2 */}
               <div className="col-md-6" data-aos="fade-up" data-aos-delay="400">
                 <div 
                   className="p-4 rounded-3 h-100 shadow-sm" 
                   style={{ 
                     backgroundColor: 'var(--color-bg)', 
-                    border: '1px solid var(--color-border)', 
-                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)'
+                    border: '1px solid var(--color-border)'
                   }}
                 >
                   <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>2024 – 2025 (Deuxième année)</span>
@@ -252,14 +380,13 @@ export default function AboutContent() {
                 </div>
               </div>
 
-              {/* Étape 5 */}
+              {/* Étape 3 */}
               <div className="col-12" data-aos="fade-up" data-aos-delay="450">
                 <div 
                   className="p-4 rounded-3 shadow-sm" 
                   style={{ 
                     backgroundColor: 'var(--color-bg)', 
-                    border: '1px solid var(--color-primary)', 
-                    transition: 'all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)'
+                    border: '1px solid var(--color-primary)'
                   }}
                 >
                   <span className="badge mb-2 px-3 py-1" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-bg)', fontWeight: 'bold' }}>2025 – 2026 (Troisième année – En cours)</span>
@@ -286,7 +413,6 @@ export default function AboutContent() {
                 boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)'
               }}
             >
-              
               <div className="row align-items-center mb-4">
                 <div className="col-lg-7">
                   <h3 className="fw-bold fs-4 m-0 d-flex align-items-center gap-2" style={{ color: '#eab308' }}>
@@ -299,8 +425,7 @@ export default function AboutContent() {
                 className="p-4 rounded-3 shadow-sm" 
                 style={{ 
                   backgroundColor: 'var(--color-bg)', 
-                  border: '1px solid var(--color-border)', 
-                  transition: 'all 0.4s ease'
+                  border: '1px solid var(--color-border)'
                 }}
               >
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">

@@ -11,6 +11,7 @@ import FrameworkPage from './Pages/Admin/FrameworkPage';
 import DatabasePage from './Pages/Admin/DatabasePage';
 import ToolPage from './Pages/Admin/ToolPage';
 import ContactPage from './Pages/Admin/ContactPage';
+import ProjectPage from './Pages/Admin/ProjectPage';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route path="tools" element={<ToolPage />} />
             <Route path="databases" element={<DatabasePage />} />
             <Route path="contacts" element={<ContactPage />} />
+            <Route path="projects" element={<ProjectPage />} />
           </Route> 
 
         </Routes>

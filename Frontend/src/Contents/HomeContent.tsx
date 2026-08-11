@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaGithub, FaLinkedin, FaArrowRight } from 'react-icons/fa';
 
@@ -7,7 +7,9 @@ import { FaGithub, FaLinkedin, FaArrowRight } from 'react-icons/fa';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
+import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
+import { Line } from '@react-three/drei';
 import { 
   motion, 
   useMotionValue, 
@@ -17,8 +19,51 @@ import {
 
 import photo from '../assets/Photo.png';
 
+type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
+
 /* ============================================================
-   FOND 3D — Scène animée en arrière-plan (React Three Fiber)
+   HOOKS UTILITAIRES POUR LE FOND 3D
+   ============================================================ */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState<boolean>(
+    () => typeof window !== 'undefined' && window.innerWidth < breakpoint
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+function useMousePosition() {
+  const pos = useRef({ x: 0, y: 0 });
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      pos.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pos.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, []);
+  return pos;
+}
+
+function useScrollDepth() {
+  const depth = useRef(0);
+  useEffect(() => {
+    const handleScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      depth.current = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  return depth;
+}
+
+/* ============================================================
+   FOND 3D — Scène immersive interactive (identique à SkillsContent)
    ============================================================ */
 function FloatingShape({
   position,
@@ -27,18 +72,23 @@ function FloatingShape({
   color
 }: {
   position: [number, number, number];
-  geometry: 'icosahedron' | 'torus' | 'octahedron';
+  geometry: GeometryKind;
   speed: number;
   color: string;
 }) {
-  const meshRef = useRef<any>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const current = useRef(new THREE.Color(color));
+  const target = useMemo(() => new THREE.Color(color), [color]);
 
   useFrame(({ clock }) => {
-    if (!meshRef.current) return;
+    const mesh = meshRef.current;
+    if (!mesh) return;
     const t = clock.getElapsedTime();
-    meshRef.current.rotation.x = t * speed * 0.3;
-    meshRef.current.rotation.y = t * speed * 0.5;
-    meshRef.current.position.y = position[1] + Math.sin(t * speed) * 0.4;
+    mesh.rotation.x = t * speed * 0.3;
+    mesh.rotation.y = t * speed * 0.5;
+    mesh.position.y = position[1] + Math.sin(t * speed) * 0.4;
+    current.current.lerp(target, 0.03);
+    (mesh.material as THREE.MeshBasicMaterial).color.copy(current.current);
   });
 
   return (
@@ -46,51 +96,133 @@ function FloatingShape({
       {geometry === 'icosahedron' && <icosahedronGeometry args={[1, 0]} />}
       {geometry === 'torus' && <torusGeometry args={[0.8, 0.28, 16, 100]} />}
       {geometry === 'octahedron' && <octahedronGeometry args={[1, 0]} />}
-      <meshBasicMaterial color={color} wireframe transparent opacity={0.25} />
+      <meshBasicMaterial color={color} wireframe transparent opacity={0.32} />
     </mesh>
   );
 }
 
-function ParallaxRig({ children }: { children: React.ReactNode }) {
-  const groupRef = useRef<any>(null);
-  const mouse = useRef({ x: 0, y: 0 });
+function SkillCore({ accent }: { accent: string }) {
+  const ref = useRef<THREE.Mesh>(null);
+  const current = useRef(new THREE.Color(accent));
+  const target = useMemo(() => new THREE.Color(accent), [accent]);
 
-  useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
-      mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.current.y = (e.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, []);
+  useFrame(({ clock }) => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const t = clock.getElapsedTime();
+    mesh.scale.setScalar(1 + Math.sin(t * 0.6) * 0.06);
+    mesh.rotation.y = t * 0.15;
+    mesh.rotation.x = t * 0.08;
+    current.current.lerp(target, 0.03);
+    (mesh.material as THREE.MeshBasicMaterial).color.copy(current.current);
+  });
 
-  useFrame(() => {
-    if (!groupRef.current) return;
-    groupRef.current.rotation.y += (mouse.current.x * 0.15 - groupRef.current.rotation.y) * 0.02;
-    groupRef.current.rotation.x += (-mouse.current.y * 0.1 - groupRef.current.rotation.x) * 0.02;
+  return (
+    <mesh ref={ref} position={[0, 0, -1.5]}>
+      <icosahedronGeometry args={[1.6, 1]} />
+      <meshBasicMaterial color={accent} wireframe transparent opacity={0.16} />
+    </mesh>
+  );
+}
+
+function ConnectionLines({ points, accent }: { points: [number, number, number][]; accent: string }) {
+  const segments = useMemo(
+    () => points.map((p) => [p, [0, 0, -1.5] as [number, number, number]] as [[number, number, number], [number, number, number]]),
+    [points]
+  );
+  return (
+    <>
+      {segments.map((seg, i) => (
+        <Line key={i} points={seg} color={accent} transparent opacity={0.14} lineWidth={1} />
+      ))}
+    </>
+  );
+}
+
+function Particles({ count, accent }: { count: number; accent: string }) {
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] = (Math.random() - 0.5) * 16;
+      arr[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 8 - 4;
+    }
+    return arr;
+  }, [count]);
+  const ref = useRef<THREE.Points>(null);
+
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.rotation.y = clock.getElapsedTime() * 0.015;
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial color={accent} size={0.03} transparent opacity={0.5} sizeAttenuation />
+    </points>
+  );
+}
+
+function SceneRig({
+  children,
+  mouse,
+  scroll
+}: {
+  children: React.ReactNode;
+  mouse: React.MutableRefObject<{ x: number; y: number }>;
+  scroll: React.MutableRefObject<number>;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ camera }) => {
+    const group = groupRef.current;
+    if (!group) return;
+    group.rotation.y += (mouse.current.x * 0.15 - group.rotation.y) * 0.02;
+    group.rotation.x += (-mouse.current.y * 0.1 - group.rotation.x) * 0.02;
+    const targetZ = 8 - scroll.current * 1.4;
+    camera.position.z += (targetZ - camera.position.z) * 0.03;
   });
 
   return <group ref={groupRef}>{children}</group>;
 }
 
 function HomeBackground3D() {
+  const isMobile = useIsMobile();
+  const mouse = useMousePosition();
+  const scroll = useScrollDepth();
+  const accent = '#60a5fa';
+
+  const shapePositions = useMemo<[number, number, number][]>(
+    () => [
+      [-4, 1.5, -2],
+      [4.5, -1, -3],
+      [2.5, 2.5, -4],
+      [-3.5, -2, -3]
+    ],
+    []
+  );
+  const visibleShapes = isMobile ? shapePositions.slice(0, 2) : shapePositions;
+  const geometries: GeometryKind[] = ['icosahedron', 'torus', 'octahedron'];
+
   return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: 'none',
-        overflow: 'hidden'
-      }}
-    >
-      <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={[1, 1.5]}>
-        <ParallaxRig>
-          <FloatingShape position={[-4, 1.5, -2]} geometry="icosahedron" speed={0.6} color="#60a5fa" />
-          <FloatingShape position={[4.5, -1, -3]} geometry="torus" speed={0.4} color="#3b82f6" />
-          <FloatingShape position={[2.5, 2.5, -4]} geometry="octahedron" speed={0.8} color="#93c5fd" />
-          <FloatingShape position={[-3.5, -2, -3]} geometry="octahedron" speed={0.5} color="#2563eb" />
-        </ParallaxRig>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+      <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
+        <SceneRig mouse={mouse} scroll={scroll}>
+          <SkillCore accent={accent} />
+          <Particles count={isMobile ? 50 : 140} accent={accent} />
+          {visibleShapes.map((pos, i) => (
+            <FloatingShape
+              key={i}
+              position={pos}
+              geometry={geometries[i % geometries.length]}
+              speed={0.4 + i * 0.12}
+              color={accent}
+            />
+          ))}
+          {!isMobile && <ConnectionLines points={visibleShapes} accent={accent} />}
+        </SceneRig>
       </Canvas>
     </div>
   );
@@ -210,9 +342,9 @@ export default function HomeContent() {
         }
       `}</style>
 
-      <div className="home-page-wrapper d-flex align-items-center position-relative" style={{ minHeight: '100vh', paddingTop: '80px', backgroundColor: 'var(--color-bg)', overflow: 'hidden' }}>
+      <div className="home-page-wrapper d-flex align-items-center position-relative" style={{ minHeight: '100vh', paddingTop: '80px', backgroundColor: '#0f172a', overflow: 'hidden' }}>
         
-        {/* Fond 3D interactif avec Three.js */}
+        {/* Fond 3D interactif amélioré (identique à skillscontent) */}
         <HomeBackground3D />
 
         <div className="container py-5 position-relative" style={{ zIndex: 1 }}>
@@ -221,23 +353,23 @@ export default function HomeContent() {
             {/* Colonne de gauche : Texte et Présentation */}
             <div className="col-lg-7" data-aos="fade-right">
               <div className="mb-3">
-                <span className="badge px-3 py-2 rounded-pill fw-semibold" style={{ backgroundColor: 'var(--color-success-bg)', color: 'var(--color-primary)' }}>
+                <span className="badge px-3 py-2 rounded-pill fw-semibold" style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#4ade80' }}>
                   👋 Bienvenue sur mon portfolio
                 </span>
               </div>
               
               {/* Le nom s'affiche d'abord en haut (statique) */}
-              <h1 className="display-4 fw-bold mb-3" style={{ color: 'var(--color-text-main)' }}>
-                Salut, je suis <span style={{ color: 'var(--color-primary)' }}>Kakabi Christian</span>
+              <h1 className="display-4 fw-bold mb-3" style={{ color: '#ffffff' }}>
+                Salut, je suis <span style={{ color: '#60a5fa' }}>Kakabi Christian</span>
               </h1>
               
               {/* Texte dynamique avec effet machine à écrire pour la profession */}
-              <h2 className="h4 fw-semibold mb-4" style={{ color: 'var(--color-text-muted)', minHeight: '35px' }}>
+              <h2 className="h4 fw-semibold mb-4" style={{ color: '#94a3b8', minHeight: '35px' }}>
                 <span>{currentSubText}</span>
                 <span className="cursor-blink" style={{ height: '24px', verticalAlign: 'middle' }}>&nbsp;</span>
               </h2>
               
-              <p className="lead mb-4" style={{ color: 'var(--color-text-muted)', fontSize: '1.05rem', lineHeight: '1.7' }}>
+              <p className="lead mb-4" style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.7' }}>
                 Passionné par la conception et le développement d'applications web performantes. 
                 Je transforme vos idées en solutions numériques robustes, de l'interface utilisateur jusqu'à l'infrastructure cloud.
               </p>
@@ -247,7 +379,7 @@ export default function HomeContent() {
                 <Link 
                   to="/project" 
                   className="btn px-4 py-3 rounded-pill fw-bold d-flex align-items-center gap-2 shadow-lg"
-                  style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-bg)', border: 'none' }}
+                  style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none' }}
                 >
                   Explorer mes projets <FaArrowRight />
                 </Link>
@@ -255,7 +387,7 @@ export default function HomeContent() {
                 <Link 
                   to="/contact" 
                   className="btn px-4 py-3 rounded-pill fw-bold d-flex align-items-center gap-2"
-                  style={{ backgroundColor: 'transparent', color: 'var(--color-text-main)', border: `2px solid var(--color-border)` }}
+                  style={{ backgroundColor: 'transparent', color: '#ffffff', border: '2px solid rgba(255, 255, 255, 0.2)' }}
                 >
                   Me contacter
                 </Link>
@@ -263,13 +395,13 @@ export default function HomeContent() {
 
               {/* Réseaux Sociaux Professionnels */}
               <div className="d-flex align-items-center gap-3 pt-3" data-aos="fade-up" data-aos-delay="400">
-                <span className="small fw-semibold" style={{ color: 'var(--color-text-muted)' }}>Retrouvez-moi sur :</span>
+                <span className="small fw-semibold" style={{ color: '#94a3b8' }}>Retrouvez-moi sur :</span>
                 <a 
                   href="https://github.com/kakabi-christian" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center shadow-sm"
-                  style={{ width: '40px', height: '40px', backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', border: `1px solid var(--color-border)` }}
+                  style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#60a5fa', border: '1px solid rgba(255, 255, 255, 0.15)' }}
                   title="GitHub"
                 >
                   <FaGithub size={20} />
@@ -279,7 +411,7 @@ export default function HomeContent() {
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center shadow-sm"
-                  style={{ width: '40px', height: '40px', backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', border: `1px solid var(--color-border)` }}
+                  style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#60a5fa', border: '1px solid rgba(255, 255, 255, 0.15)' }}
                   title="LinkedIn"
                 >
                   <FaLinkedin size={20} />
@@ -309,8 +441,8 @@ export default function HomeContent() {
                   <div 
                     className="p-3 rounded-4 position-relative shadow-2xl" 
                     style={{ 
-                      backgroundColor: 'var(--color-surface)', 
-                      border: `1px solid var(--color-border)`,
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
                       zIndex: 1,
                       maxWidth: '360px',
                       margin: '0 auto'
