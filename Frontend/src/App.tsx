@@ -10,6 +10,7 @@ import Profile from './Pages/Admin/Profile';
 import FrameworkPage from './Pages/Admin/FrameworkPage';
 import DatabasePage from './Pages/Admin/DatabasePage';
 import ToolPage from './Pages/Admin/ToolPage';
+import ContactPage from './Pages/Admin/ContactPage';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="frameworks" element={<FrameworkPage />} />
             <Route path="tools" element={<ToolPage />} />
             <Route path="databases" element={<DatabasePage />} />
+            <Route path="contacts" element={<ContactPage />} />
           </Route> 
 
         </Routes>

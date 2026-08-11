@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+// src/components/Sidebar.tsx
+import React, { useState, useEffect } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { 
   MdLogout,
   MdAccountCircle,
@@ -13,6 +14,7 @@ import {
   MdContacts
 } from "react-icons/md";
 import { authService } from "../../Services/AuthService";
+import { ContactService } from "../../Services/ContactService";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -21,7 +23,39 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const data = await ContactService.getUnreadCount();
+      const count = typeof data === 'number' ? data : (data.count || data.unread_count || 0);
+      setUnreadCount(count);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des messages non lus", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+
+    // Écouteur pour forcer la mise à jour instantanée si un message est lu
+    const handleContactUpdate = () => {
+      fetchUnreadCount();
+    };
+
+    window.addEventListener('contactRead', handleContactUpdate);
+    window.addEventListener('focus', handleContactUpdate); // Actualise aussi si l'onglet redevient actif
+
+    const interval = setInterval(fetchUnreadCount, 30000); // Réduit à 30s si besoin
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('contactRead', handleContactUpdate);
+      window.removeEventListener('focus', handleContactUpdate);
+    };
+  }, [location.pathname]);
 
   const confirmLogout = async () => {
     try {
@@ -56,7 +90,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
 
   return (
     <>
-      {/* STYLE CSS INTERNE POUR LE TOOLTIP AU SURVOL */}
       <style>{`
         .sidebar-container.collapsed .nav-item .nav-link::after {
           content: attr(data-label);
@@ -97,7 +130,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
           zIndex: 1000
         }}
       >
-        {/* Header */}
         <div className={`d-flex align-items-center mb-4 mt-2 ${isCollapsed ? 'justify-content-center' : 'justify-content-between'}`}>
           {!isCollapsed && (
             <div className="d-flex align-items-center text-decoration-none">
@@ -118,9 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
 
         <hr style={{ backgroundColor: "var(--color-border)", height: '1px', border: 'none' }} />
 
-        {/* Menu Navigation */}
         <ul className="nav nav-pills flex-column mb-auto">
-          
           <li className="nav-item mb-2">
             <NavLink to="/admin/stats" className={navLinkClasses} style={navLinkStyle} data-label="Tableau de Bord">
               <div className="d-flex align-items-center">
@@ -176,11 +206,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
           </li>
 
           <li className="nav-item mb-2">
-            <NavLink to="/admin/contacts" className={navLinkClasses} style={navLinkStyle} data-label="Contacts">
+            <NavLink to="/admin/contacts" className={navLinkClasses} style={navLinkStyle} data-label={`Contacts ${unreadCount > 0 ? `(${unreadCount})` : ''}`}>
               <div className="d-flex align-items-center">
                 <MdContacts className={isCollapsed ? "" : "me-2"} size={22} />
                 {!isCollapsed && <span>Contacts</span>}
               </div>
+              {unreadCount > 0 && (
+                <span 
+                  className="badge rounded-pill" 
+                  style={{ 
+                    backgroundColor: 'var(--color-danger)', 
+                    color: '#fff', 
+                    fontSize: '0.75rem',
+                    padding: isCollapsed ? '2px 5px' : '0.35em 0.65em',
+                    position: isCollapsed ? 'absolute' : 'static',
+                    top: isCollapsed ? '5px' : 'auto',
+                    right: isCollapsed ? '5px' : 'auto'
+                  }}
+                >
+                  {unreadCount}
+                </span>
+              )}
             </NavLink>
           </li>
 
@@ -196,7 +242,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
 
         <hr style={{ backgroundColor: "var(--color-border)", height: '1px', border: 'none' }} />
 
-        {/* Déconnexion */}
         <div className="mt-auto">
           <button
             onClick={() => setShowLogoutModal(true)}
@@ -213,7 +258,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
         </div>
       </div>
 
-      {/* MODAL DE DÉCONNEXION */}
       {showLogoutModal && (
         <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(4px)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '400px' }}>

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FrameworkController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\ToolController; // Importation du controller Tool
+use App\Http\Controllers\Api\ContactController; // Importation du controller Contact
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,9 @@ Route::get('/databases/{database}', [DatabaseController::class, 'show']);
 Route::get('/tools', [ToolController::class, 'index']);
 Route::get('/tools/{tool}', [ToolController::class, 'show']);
 
+// Route publique pour envoyer un message depuis le formulaire de contact du portfolio
+Route::post('/contact', [ContactController::class, 'store']);
+
 // Routes protégées par Sanctum
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -37,4 +41,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Gestion complète des Tools (hors index et show)
     Route::apiResource('tools', ToolController::class)->except(['index', 'show']);
+
+    // --- Routes du Dashboard Admin pour les Contacts ---
+    Route::get('/admin/contacts', [ContactController::class, 'index']);
+    Route::get('/admin/contacts/count/unread', [ContactController::class, 'countUnread']);
+    Route::get('/admin/contacts/{id}', [ContactController::class, 'show']);
+    Route::post('/admin/contacts/{id}/reply', [ContactController::class, 'reply']);
+    Route::delete('/admin/contacts/{id}', [ContactController::class, 'destroy']);
 });
