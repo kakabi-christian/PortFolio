@@ -1,6 +1,5 @@
 // src/Services/ToolService.ts
 import api from "./api";
-import type { Tool } from "../Models/Tool";
 
 export const toolService = {
   // Récupérer la liste des outils avec pagination

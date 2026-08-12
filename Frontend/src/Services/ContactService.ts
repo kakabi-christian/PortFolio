@@ -1,6 +1,6 @@
 // src/Services/ContactService.ts
 import api from "./api";
-import type { Contact, ContactFormData, ContactReplyData } from "../Models/Contact";
+import type { ContactFormData, ContactReplyData } from "../Models/Contact";
 
 export const ContactService = {
   /**

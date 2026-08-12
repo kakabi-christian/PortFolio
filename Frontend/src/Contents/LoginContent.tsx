@@ -104,29 +104,7 @@ function CyborgHeadHUD({
   );
 }
 
-function SkillCore({ accent }: { accent: string }) {
-  const ref = useRef<THREE.Mesh>(null);
-  const current = useRef(new THREE.Color(accent));
-  const target = useMemo(() => new THREE.Color(accent), [accent]);
 
-  useFrame(({ clock }) => {
-    const mesh = ref.current;
-    if (!mesh) return;
-    const t = clock.getElapsedTime();
-    mesh.scale.setScalar(1 + Math.sin(t * 0.6) * 0.06);
-    mesh.rotation.y = t * 0.15;
-    mesh.rotation.x = t * 0.08;
-    current.current.lerp(target, 0.03);
-    (mesh.material as THREE.MeshBasicMaterial).color.copy(current.current);
-  });
-
-  return (
-    <mesh ref={ref} position={[0, 0, -1.5]}>
-      <icosahedronGeometry args={[1.6, 1]} />
-      <meshBasicMaterial color={accent} wireframe transparent opacity={0.15} />
-    </mesh>
-  );
-}
 
 function Particles({ count, accent }: { count: number; accent: string }) {
   const positions = useMemo(() => {

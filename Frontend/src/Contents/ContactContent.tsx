@@ -30,7 +30,7 @@ import { ContactService } from '../Services/ContactService';
 import photo from '../assets/ContactPeople.png';
 
 type ShapeType = 'envelope' | 'paperplane' | 'bubble';
-type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
+// type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
 
 /* ============================================================
    THEME — mêmes couleurs que HomeContent / SkillsContent

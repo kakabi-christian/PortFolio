@@ -9,7 +9,6 @@ import {
   MdImage,
   MdSearch,
   MdFilterList,
-  MdTrendingUp
 } from 'react-icons/md';
 //@ts-ignore
 import AOS from 'aos';

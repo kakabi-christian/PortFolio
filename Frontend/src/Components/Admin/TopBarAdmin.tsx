@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-    MdNotificationsNone, 
     MdLogout, 
     MdPerson, 
     MdLightMode, 
@@ -24,7 +23,7 @@ const TopBarAdmin: React.FC<TopBarAdminProps> = ({ onMenuClick }) => {
     const navigate = useNavigate();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
-    const [unreadCount, setUnreadCount] = useState<number>(0);
+    // const [unreadCount, setUnreadCount] = useState<number>(0);
     const [user, setUser] = useState<Utilisateur | null>(null);
     const profileRef = useRef<HTMLDivElement>(null);
 
