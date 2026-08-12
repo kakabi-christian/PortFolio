@@ -17,7 +17,7 @@ const Dashboard: React.FC = () => {
             <div 
                 className="d-flex flex-column flex-grow-1" 
                 style={{ 
-                    // Ajustement dynamique pour laisser la place à la Sidebar
+                    // Ajustement dynamique pour laisser la place à la Sidebar admin
                     marginLeft: isCollapsed ? '80px' : '280px', 
                     transition: 'margin-left 0.3s ease',
                     minHeight: '100vh',
