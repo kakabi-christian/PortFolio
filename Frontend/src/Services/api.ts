@@ -11,8 +11,22 @@ const api = axios.create({
     withCredentials: true,
 });
 
-// LOG DE DÉBUG : Vérifie ce que Vite charge réellement au démarrage
+// EXPORT DE L'URL DE STOCKAGE
+export const STORAGE_URL = import.meta.env.VITE_STORAGE_URL;
+
+// Helper global pour générer l'URL complète d'une image/icône
+export const getStorageUrl = (path?: string | null) => {
+    if (!path) return undefined;
+    // Si le chemin commence déjà par http ou https, on le retourne tel quel
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        return path;
+    }
+    return `${STORAGE_URL}/${path.replace(/^\/+/, '')}`;
+};
+
+// LOGS DE DÉBUG
 console.log("🔍 VITE_API_BASE_URL configurée :", import.meta.env.VITE_API_BASE_URL);
+console.log("🔍 VITE_STORAGE_URL configurée :", STORAGE_URL);
 
 // Intercepteur pour injecter le token Bearer s'il existe dans le localStorage et logger les requêtes
 api.interceptors.request.use((config) => {
@@ -21,7 +35,6 @@ api.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // LOG DE DÉBUG : Affiche l'URL exacte appelée par Axios (baseURL + url)
     console.log(`🚀 Requête Axios sortante vers -> [${config.method?.toUpperCase()}] ${config.baseURL}${config.url}`);
     
     return config;

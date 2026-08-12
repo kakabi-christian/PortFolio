@@ -6,10 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ContactRequest;
 use App\Models\Contact;
 use App\Services\ContactMailService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-
 
 class ContactController extends Controller
 {
@@ -17,8 +16,6 @@ class ContactController extends Controller
 
     /**
      * Injection du service de mail via le constructeur.
-     *
-     * @param ContactMailService $mailService
      */
     public function __construct(ContactMailService $mailService)
     {
@@ -32,6 +29,7 @@ class ContactController extends Controller
     {
         // Récupère les contacts, 15 par page, du plus récent au plus ancien.
         $contacts = Contact::latest()->paginate(15);
+
         return response()->json($contacts, 200);
     }
 
@@ -41,6 +39,7 @@ class ContactController extends Controller
     public function countUnread()
     {
         $count = Contact::where('is_read', false)->count();
+
         return response()->json(['unread_count' => $count], 200);
     }
 
@@ -61,13 +60,13 @@ class ContactController extends Controller
             return response()->json([
                 'message' => 'Votre message a été enregistré, mais une erreur est survenue lors de l\'envoi de la notification.',
                 'contact' => $contact,
-                'mail_error' => $e->getMessage() // À retirer en production
+                'mail_error' => $e->getMessage(), // À retirer en production
             ], 201);
         }
 
         return response()->json([
             'message' => 'Votre message a bien été envoyé. Je vous répondrai dans les meilleurs délais.',
-            'contact' => $contact
+            'contact' => $contact,
         ], 201);
     }
 
@@ -79,7 +78,7 @@ class ContactController extends Controller
         $contact = Contact::findOrFail($id);
 
         // Marquer le message comme lu dès sa consultation par l'admin
-        if (!$contact->is_read) {
+        if (! $contact->is_read) {
             $contact->update(['is_read' => true]);
         }
 
@@ -93,7 +92,7 @@ class ContactController extends Controller
     {
         // Validation du message de réponse
         $request->validate([
-            'reply_message' => 'required|string|min:5'
+            'reply_message' => 'required|string|min:5',
         ]);
 
         $contact = Contact::findOrFail($id);
@@ -127,13 +126,13 @@ class ContactController extends Controller
             // \Log::error("Erreur lors de la réponse au contact ID {$id} : " . $e->getMessage());
             return response()->json([
                 'message' => 'Une erreur est survenue lors de l\'envoi de la réponse.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
 
         return response()->json([
             'message' => 'Votre réponse a été envoyée avec succès à l\'internaute.',
-            'contact' => $contact
+            'contact' => $contact,
         ], 200);
     }
 

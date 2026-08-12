@@ -15,15 +15,25 @@ export const ProjectService = {
     return response.data.data || response.data;
   },
 
-  // Créer un nouveau projet (admin)
-  async create(projectData: Project): Promise<Project> {
-    const response = await api.post('/projects', projectData);
+  // Créer un nouveau projet (avec support des fichiers via FormData)
+  async create(formData: FormData): Promise<Project> {
+    const response = await api.post('/projects', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data.data || response.data;
   },
 
-  // Mettre à jour un projet existant (admin)
-  async update(idOrSlug: string | number, projectData: Partial<Project>): Promise<Project> {
-    const response = await api.put(`/projects/${idOrSlug}`, projectData);
+  // Mettre à jour un projet existant (avec support des fichiers via FormData et _method PUT)
+  async update(idOrSlug: string | number, formData: FormData): Promise<Project> {
+    // On utilise POST car certains serveurs/proxies bloquent les fichiers sur les méthodes PUT
+    // Laravel traitera cela comme un PUT grâce au champ _method: 'PUT' dans le formData
+    const response = await api.post(`/projects/${idOrSlug}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data.data || response.data;
   },
 

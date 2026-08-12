@@ -3,16 +3,15 @@
 namespace App\Services;
 
 use App\Mail\ContactMail;
-use Illuminate\Support\Facades\Mail;
 use Exception;
+use Illuminate\Support\Facades\Mail;
 
 class ContactMailService
 {
     /**
      * Envoie la notification de contact à l'administrateur du site.
      *
-     * @param array $data Les données validées du formulaire.
-     * @return void
+     * @param  array  $data  Les données validées du formulaire.
      *
      * @throws Exception Si l'envoi échoue.
      */
@@ -39,18 +38,13 @@ class ContactMailService
     /**
      * Envoie une réponse au visiteur depuis l'administration.
      * (Optionnel pour le moment, mais prêt pour la suite).
-     *
-     * @param string $visitorEmail
-     * @param string $visitorName
-     * @param string $adminReplyMessage
-     * @return void
      */
     public function sendReplyToVisitor(string $visitorEmail, string $visitorName, string $adminReplyMessage, string $originalSubject): void
     {
         // Pour la réponse, on utilise la même logique d'expéditeur définie dans le .env
         Mail::raw($adminReplyMessage, function ($message) use ($visitorEmail, $visitorName, $originalSubject) {
             $message->to($visitorEmail, $visitorName)
-                    ->subject('Re: ' . $originalSubject);
+                ->subject('Re: '.$originalSubject);
         });
     }
 }

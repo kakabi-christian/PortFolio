@@ -13,7 +13,7 @@ class ProjectRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Autoriser la requête
+        return true;
     }
 
     /**
@@ -28,18 +28,15 @@ class ProjectRequest extends FormRequest
 
         return [
             'title' => ['required', 'string', 'max:255'],
-            
-            // Le slug doit être unique dans la table projects, 
-            // mais on l'exclut pour le projet actuel lors d'une mise à jour
             'slug' => [
-                'nullable', 
-                'string', 
-                'max:255', 
-                Rule::unique('projects', 'slug')->ignore($projectId)
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('projects', 'slug')->ignore($projectId),
             ],
-            
             'description' => ['required', 'string'],
-            'image_url' => ['nullable', 'string', 'max:255'], // ou 'url' si tu stockes des liens externes, ou 'image' si c'est un fichier uploadé
+            // Utiliser la même règle standard et propre que pour les tools
+            'image_url' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'github_url' => ['nullable', 'url', 'max:255'],
             'demo_url' => ['nullable', 'url', 'max:255'],
             'featured' => ['sometimes', 'boolean'],

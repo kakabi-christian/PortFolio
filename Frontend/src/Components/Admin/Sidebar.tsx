@@ -16,6 +16,12 @@ import {
 import { authService } from "../../Services/AuthService";
 import { ContactService } from "../../Services/ContactService";
 
+/* ============================================================
+   THEME — mêmes couleurs que Home / Skills / Contact / Login
+   ============================================================ */
+const ACCENT = '#38bdf8';
+const DANGER = '#ef4444';
+
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
@@ -79,8 +85,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const navLinkStyle = ({ isActive }: { isActive: boolean }) => ({
     borderRadius: '10px',
     transition: 'all 0.3s ease',
-    backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
-    color: isActive ? '#0f172a' : 'var(--color-text-main)',
+    backgroundColor: isActive ? ACCENT : 'transparent',
+    color: isActive ? '#0f172a' : '#ffffff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: isCollapsed ? 'center' : 'space-between',
@@ -97,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
           left: 100%;
           margin-left: 15px;
           padding: 5px 10px;
-          background: var(--color-primary);
+          background: ${ACCENT};
           color: #0f172a;
           font-weight: 600;
           border-radius: 5px;
@@ -120,9 +126,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
         style={{ 
           width: isCollapsed ? "80px" : "280px", 
           minHeight: "100vh", 
-          backgroundColor: "var(--color-surface)", 
-          color: "var(--color-text-main)",
-          borderRight: "1px solid var(--color-border)",
+          backgroundColor: "#020617", 
+          color: "#ffffff",
+          borderRight: "1px solid rgba(255, 255, 255, 0.1)",
           transition: "all 0.3s ease",
           position: "fixed",
           left: 0,
@@ -133,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
         <div className={`d-flex align-items-center mb-4 mt-2 ${isCollapsed ? 'justify-content-center' : 'justify-content-between'}`}>
           {!isCollapsed && (
             <div className="d-flex align-items-center text-decoration-none">
-              <MdDashboard style={{ color: 'var(--color-primary)' }} className="me-2" size={32} />
+              <MdDashboard style={{ color: ACCENT }} className="me-2" size={32} />
               <div className="d-flex flex-column">
                 <span className="fs-4 fw-bold text-white" style={{ lineHeight: '1.2' }}>Admin</span>
               </div>
@@ -144,11 +150,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             onClick={() => setIsCollapsed(!isCollapsed)}
             style={{ fontSize: '28px' }}
           >
-            <MdMenu style={{ color: 'var(--color-primary)' }} />
+            <MdMenu style={{ color: ACCENT }} />
           </button>
         </div>
 
-        <hr style={{ backgroundColor: "var(--color-border)", height: '1px', border: 'none' }} />
+        <hr style={{ backgroundColor: "rgba(255, 255, 255, 0.1)", height: '1px', border: 'none' }} />
 
         <ul className="nav nav-pills flex-column mb-auto">
           <li className="nav-item mb-2">
@@ -215,7 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                 <span 
                   className="badge rounded-pill" 
                   style={{ 
-                    backgroundColor: 'var(--color-danger)', 
+                    backgroundColor: DANGER, 
                     color: '#fff', 
                     fontSize: '0.75rem',
                     padding: isCollapsed ? '2px 5px' : '0.35em 0.65em',
@@ -240,7 +246,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
           </li>
         </ul>
 
-        <hr style={{ backgroundColor: "var(--color-border)", height: '1px', border: 'none' }} />
+        <hr style={{ backgroundColor: "rgba(255, 255, 255, 0.1)", height: '1px', border: 'none' }} />
 
         <div className="mt-auto">
           <button
@@ -248,11 +254,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             className={`btn w-100 d-flex align-items-center gap-2 p-3 text-danger border-0 ${isCollapsed ? 'justify-content-center' : 'justify-content-start'}`}
             style={{ 
               borderRadius: '12px', 
-              backgroundColor: 'var(--color-danger-bg)', 
+              backgroundColor: 'rgba(239, 68, 68, 0.1)', 
               transition: 'all 0.2s'
             }}
           >
-            <MdLogout size={22} style={{ color: 'var(--color-danger)' }} />
+            <MdLogout size={22} style={{ color: DANGER }} />
             {!isCollapsed && <span className="fw-bold">Déconnexion</span>}
           </button>
         </div>
@@ -261,18 +267,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
       {showLogoutModal && (
         <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(4px)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '400px' }}>
-            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '20px', backgroundColor: 'var(--color-surface)', color: 'var(--color-text-main)' }}>
+            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '20px', backgroundColor: '#020617', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <div className="modal-body p-4 text-center">
                 <div className="mb-3">
-                    <MdLogout size={50} style={{ color: 'var(--color-danger)' }} />
+                    <MdLogout size={50} style={{ color: DANGER }} />
                 </div>
                 <h5 className="fw-bold mb-3 text-white">Déconnexion</h5>
-                <p style={{ color: 'var(--color-text-muted)' }}>Êtes-vous sûr de vouloir quitter votre session ?</p>
+                <p style={{ color: '#94a3b8' }}>Êtes-vous sûr de vouloir quitter votre session ?</p>
                 <div className="d-flex gap-2 mt-4">
                   <button 
                     type="button" 
                     className="btn fw-bold w-50 py-2" 
-                    style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-border)', borderRadius: '10px' }} 
+                    style={{ color: '#94a3b8', backgroundColor: 'rgba(255, 255, 255, 0.08)', borderRadius: '10px' }} 
                     onClick={() => setShowLogoutModal(false)}
                   >
                     Annuler
@@ -280,7 +286,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                   <button 
                     type="button" 
                     className="btn fw-bold w-50 py-2 shadow-sm text-white" 
-                    style={{ backgroundColor: 'var(--color-danger)', borderRadius: '10px' }} 
+                    style={{ backgroundColor: DANGER, borderRadius: '10px' }} 
                     onClick={confirmLogout}
                   >
                     Oui, quitter

@@ -37,7 +37,7 @@ class FrameworkController extends Controller
 
         return response()->json([
             'message' => 'Framework créé avec succès !',
-            'data' => $framework
+            'data' => $framework,
         ], 201);
     }
 
@@ -47,7 +47,7 @@ class FrameworkController extends Controller
     public function show(Framework $framework)
     {
         return response()->json([
-            'data' => $framework
+            'data' => $framework,
         ]);
     }
 
@@ -73,7 +73,7 @@ class FrameworkController extends Controller
 
         return response()->json([
             'message' => 'Framework mis à jour avec succès !',
-            'data' => $framework
+            'data' => $framework,
         ]);
     }
 
@@ -90,7 +90,7 @@ class FrameworkController extends Controller
         $framework->delete();
 
         return response()->json([
-            'message' => 'Framework supprimé avec succès !'
+            'message' => 'Framework supprimé avec succès !',
         ]);
     }
 }

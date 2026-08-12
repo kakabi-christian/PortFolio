@@ -342,7 +342,7 @@ export default function HomeContent() {
         }
       `}</style>
 
-      <div className="home-page-wrapper d-flex align-items-center position-relative" style={{ minHeight: '100vh', paddingTop: '80px', backgroundColor: '#0f172a', overflow: 'hidden' }}>
+      <div className="home-page-wrapper d-flex align-items-center position-relative" style={{ minHeight: '100vh', paddingTop: '80px', backgroundColor: '#020617', overflow: 'hidden' }}>
         
         {/* Fond 3D interactif amélioré (identique à skillscontent) */}
         <HomeBackground3D />

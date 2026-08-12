@@ -3,9 +3,9 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -24,7 +24,7 @@ class ContactMail extends Mailable
     /**
      * Create a new message instance.
      *
-     * @param array $contactData Les données validées du formulaire.
+     * @param  array  $contactData  Les données validées du formulaire.
      */
     public function __construct(array $contactData)
     {
@@ -38,10 +38,10 @@ class ContactMail extends Mailable
     {
         return new Envelope(
             // Sujet dynamique basé sur le sujet entré par le visiteur
-            subject: 'Nouveau message de contact : ' . $this->contactData['subject'],
+            subject: 'Nouveau message de contact : '.$this->contactData['subject'],
             // Utilisation correcte de l'objet Address pour éviter les warnings
             replyTo: [
-                new Address($this->contactData['sender_email'], $this->contactData['sender_name'])
+                new Address($this->contactData['sender_email'], $this->contactData['sender_name']),
             ],
         );
     }
@@ -60,7 +60,7 @@ class ContactMail extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

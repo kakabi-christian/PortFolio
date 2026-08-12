@@ -1,11 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\FrameworkController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\DatabaseController;
-use App\Http\Controllers\Api\ToolController; // Importation du controller Tool
-use App\Http\Controllers\Api\ContactController; // Importation du controller Contact
-use App\Http\Controllers\Api\ProjectController; // Importation du controller Project
+use App\Http\Controllers\Api\FrameworkController; // Importation du controller Tool
+use App\Http\Controllers\Api\ProjectController; // Importation du controller Contact
+use App\Http\Controllers\Api\ToolController; // Importation du controller Project
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,7 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    
+
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Gestion complète des Frameworks (hors index et show)

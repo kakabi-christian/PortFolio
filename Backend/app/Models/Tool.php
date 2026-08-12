@@ -14,6 +14,7 @@ class Tool extends Model
     protected $fillable = [
         'name',
         'category',
+        'level',
         'icon',
     ];
 }

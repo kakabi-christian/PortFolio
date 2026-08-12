@@ -15,6 +15,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { frameworkService } from '../../Services/FrameworkService';
 import type { Framework } from '../../Models/Framework';
+import { getStorageUrl } from '../../Services/api';
 
 export default function FrameworkPage() {
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
@@ -96,7 +97,7 @@ export default function FrameworkPage() {
       proficiency: framework.proficiency,
       icon: framework.icon || null
     });
-    setPreviewIcon(typeof framework.icon === 'string' ? `http://127.0.0.1:8000/storage/${framework.icon}` : null);
+    setPreviewIcon(typeof framework.icon === 'string' ? (getStorageUrl(framework.icon) ?? null) : null);
     setShowModal(true);
   };
 
@@ -264,9 +265,9 @@ export default function FrameworkPage() {
                       frameworks.map((fw) => (
                         <tr key={fw.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.2s' }}>
                           <td className="py-3 px-4">
-                            {fw.icon ? (
+                            {fw.icon && typeof fw.icon === 'string' ? (
                               <img 
-                                src={`http://127.0.0.1:8000/storage/${fw.icon}`} 
+                                src={getStorageUrl(fw.icon)} 
                                 alt={fw.name} 
                                 style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '10px', backgroundColor: '#f8fafc', padding: '6px', border: '1px solid #e2e8f0' }} 
                               />

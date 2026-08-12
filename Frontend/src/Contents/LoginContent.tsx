@@ -9,6 +9,11 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 /* ============================================================
+   THEME — mêmes couleurs que Home / Skills / Contact
+   ============================================================ */
+const ACCENT = '#38bdf8';
+
+/* ============================================================
    HOOKS UTILITAIRES POUR LE FOND 3D UNIFIÉ
    ============================================================ */
 function useIsMobile(breakpoint = 768) {
@@ -177,7 +182,7 @@ function LoginBackground3D() {
   const isMobile = useIsMobile();
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
-  const accent = '#38bdf8';
+  const accent = ACCENT;
 
   return (
     <div
@@ -191,11 +196,9 @@ function LoginBackground3D() {
     >
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <SceneRig mouse={mouse} scroll={scroll}>
-          {/* Visage / Cyborgs HUD combinés avec le noyau et les particules */}
-          <CyborgHeadHUD position={[0, 0, -2]} rotationSpeed={0.4} color="#38bdf8" />
+          {/* Cyborgs HUD sur les côtés uniquement — plus de noyau central derrière la carte */}
           <CyborgHeadHUD position={[-4, 1.5, -4]} rotationSpeed={-0.3} color="#22c55e" />
           <CyborgHeadHUD position={[4, -1.5, -4]} rotationSpeed={0.5} color="#60a5fa" />
-          <SkillCore accent={accent} />
           <Particles count={isMobile ? 50 : 130} accent={accent} />
         </SceneRig>
       </Canvas>
@@ -264,7 +267,7 @@ export default function LoginContent() {
 
   return (
     <div className="login-page-wrapper d-flex align-items-center justify-content-center position-relative overflow-hidden" 
-         style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
+         style={{ minHeight: '100vh', backgroundColor: '#020617' }}>
       
       {/* Fond 3D Interactif — Visages Cyborgs & Particules */}
       <LoginBackground3D />
@@ -278,16 +281,16 @@ export default function LoginContent() {
            style={{ 
              maxWidth: '380px', 
              width: '85%', 
-             backgroundColor: 'var(--color-surface)',
-             border: '1px solid var(--color-border)',
+             backgroundColor: 'rgba(255, 255, 255, 0.05)',
+             border: '1px solid rgba(255, 255, 255, 0.15)',
              zIndex: 1,
              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
            }}>
         
         <div className="text-center mb-3" data-aos="fade-down" data-aos-delay="200">
-          <h2 className="fw-bold fs-4 mb-1" style={{ color: 'var(--color-text-main)' }}>Bon retour !</h2>
-          <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
-            Espace admin <span className="fw-bold" style={{ color: 'var(--color-primary)' }}>Portfolio</span>
+          <h2 className="fw-bold fs-4 mb-1 text-white">Bon retour !</h2>
+          <p className="small mb-0" style={{ color: '#94a3b8' }}>
+            Espace admin <span className="fw-bold" style={{ color: ACCENT }}>Portfolio</span>
           </p>
         </div>
 
@@ -295,9 +298,9 @@ export default function LoginContent() {
           <div className="d-flex align-items-center p-2 mb-3 rounded-3" 
                 data-aos="fade"
                 style={{ 
-                  backgroundColor: message.type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
-                  borderLeft: `4px solid ${message.type === 'success' ? 'var(--color-success)' : 'var(--color-danger)'}`,
-                  color: message.type === 'success' ? 'var(--color-success)' : 'var(--color-danger)'
+                  backgroundColor: message.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  borderLeft: `4px solid ${message.type === 'success' ? '#22c55e' : '#ef4444'}`,
+                  color: message.type === 'success' ? '#22c55e' : '#ef4444'
                 }}>
             <span className="fs-5 me-2">
               {message.type === "success" ? <MdCheckCircleOutline /> : <MdErrorOutline />}
@@ -308,25 +311,25 @@ export default function LoginContent() {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="mb-3" data-aos="fade-up" data-aos-delay="300">
-            <label htmlFor="login-email" className="form-label small fw-bold mb-1" style={{ color: 'var(--color-text-muted)' }}>Adresse Email</label>
+            <label htmlFor="login-email" className="form-label small fw-bold mb-1" style={{ color: '#94a3b8' }}>Adresse Email</label>
             <div className="input-group input-group-sm">
-              <span className="input-group-text border-0 px-2" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}><MdEmail /></span>
+              <span className="input-group-text border-0 px-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#94a3b8' }}><MdEmail /></span>
               <input 
                 id="login-email"
                 type="email" 
                 className="form-control border-0 fs-6 shadow-none"
                 style={{ 
                   borderRadius: '0 8px 8px 0', 
-                  backgroundColor: 'var(--color-border)', 
-                  color: 'var(--color-text-main)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                  color: '#ffffff',
                   transition: 'all 0.3s ease'
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-surface)';
-                  e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-primary)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.boxShadow = `0 0 0 2px ${ACCENT}`;
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-border)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 name="email" 
@@ -340,26 +343,26 @@ export default function LoginContent() {
 
           <div className="mb-3" data-aos="fade-up" data-aos-delay="400">
             <div className="d-flex justify-content-between mb-1">
-              <label htmlFor="login-password" className="form-label small fw-bold mb-0" style={{ color: 'var(--color-text-muted)' }}>Mot de passe</label>
+              <label htmlFor="login-password" className="form-label small fw-bold mb-0" style={{ color: '#94a3b8' }}>Mot de passe</label>
             </div>
             <div className="input-group input-group-sm">
-              <span className="input-group-text border-0 px-2" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}><MdLock /></span>
+              <span className="input-group-text border-0 px-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#94a3b8' }}><MdLock /></span>
               <input 
                 id="login-password"
                 type="password" 
                 className="form-control border-0 fs-6 shadow-none"
                 style={{ 
                   borderRadius: '0 8px 8px 0', 
-                  backgroundColor: 'var(--color-border)', 
-                  color: 'var(--color-text-main)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                  color: '#ffffff',
                   transition: 'all 0.3s ease'
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-surface)';
-                  e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-primary)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.boxShadow = `0 0 0 2px ${ACCENT}`;
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-border)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 name="password" 
@@ -376,7 +379,7 @@ export default function LoginContent() {
                     className="btn w-100 mt-2 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" 
                     disabled={loading}
                     style={{ 
-                      backgroundColor: 'var(--color-primary)', 
+                      backgroundColor: ACCENT, 
                       color: '#0f172a', 
                       border: 'none',
                       fontSize: '0.9rem',

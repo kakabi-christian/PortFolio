@@ -16,6 +16,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { databaseService } from '../../Services/DatabaseService';
 import type { Database } from '../../Models/Database';
+import { getStorageUrl } from '../../Services/api';
 
 export default function DatabasePage() {
   const [databases, setDatabases] = useState<Database[]>([]);
@@ -98,20 +99,24 @@ export default function DatabasePage() {
     setShowModal(true);
   };
 
-  const handleOpenEditModal = (db: Database) => {
-    setIsEditing(true);
-    setCurrentId(db.id || null);
-    // Nettoyer la valeur de level si elle contient déjà un '%' ou si c'est un texte brut pour s'assurer que le slider fonctionne
-    const cleanLevel = db.level ? db.level.replace('%', '').trim() : '50';
-    setFormData({
-      name: db.name,
-      type: db.type,
-      level: isNaN(Number(cleanLevel)) ? '50' : cleanLevel,
-      icon: db.icon || null
-    });
-    setPreviewIcon(typeof db.icon === 'string' ? `http://127.0.0.1:8000/storage/${db.icon}` : null);
-    setShowModal(true);
-  };
+ const handleOpenEditModal = (db: Database) => {
+  setIsEditing(true);
+  setCurrentId(db.id || null);
+  
+  // Nettoyer la valeur de level si elle contient déjà un '%' ou si c'est un texte brut pour s'assurer que le slider fonctionne
+  const cleanLevel = db.level ? db.level.replace('%', '').trim() : '50';
+  
+  setFormData({
+    name: db.name,
+    type: db.type,
+    level: isNaN(Number(cleanLevel)) ? '50' : cleanLevel,
+    icon: db.icon || null
+  });
+
+  // Mise à jour utilisant le helper centralisé
+  setPreviewIcon(db.icon ? getStorageUrl(db.icon) || null : null);  
+  setShowModal(true);
+};
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

@@ -25,6 +25,7 @@ class ToolRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'in:DevOps,Design,Versioning,Testing,Autre'],
+            'level' => ['required', 'string', 'min:0', 'max:100'],
             'icon' => ['nullable', 'image', 'mimes:jpeg,png,jpg,svg,webp', 'max:2048'],
         ];
     }

@@ -42,6 +42,7 @@ class AuthController extends Controller
 
         } catch (\Throwable $th) {
             Log::error('REGISTER ERREUR', ['msg' => $th->getMessage()]);
+
             return response()->json(['message' => 'Erreur lors de l\'enregistrement', 'error' => $th->getMessage()], 500);
         }
     }
@@ -63,7 +64,7 @@ class AuthController extends Controller
 
             // Suppression des anciens tokens pour n'avoir qu'une session active si besoin
             $user->tokens()->delete();
-            
+
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
@@ -75,6 +76,7 @@ class AuthController extends Controller
 
         } catch (\Throwable $th) {
             Log::error('LOGIN ERREUR', ['msg' => $th->getMessage()]);
+
             return response()->json(['message' => 'Erreur connexion'], 500);
         }
     }
@@ -93,6 +95,7 @@ class AuthController extends Controller
 
         } catch (\Throwable $th) {
             Log::error('LOGOUT ERREUR', ['msg' => $th->getMessage()]);
+
             return response()->json(['message' => 'Erreur lors de la déconnexion'], 500);
         }
     }

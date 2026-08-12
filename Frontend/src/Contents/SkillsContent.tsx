@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  MdStorage,
   MdCode,
-  MdBuild,
   MdSearch,
   MdImage,
   MdLightbulb,
@@ -14,7 +12,7 @@ import 'aos/dist/aos.css';
 
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Line } from '@react-three/drei';
+import { Line, Html } from '@react-three/drei';
 import {
   motion,
   AnimatePresence,
@@ -31,9 +29,32 @@ import { databaseService } from '../Services/DatabaseService';
 import type { Tool } from '../Models/Tool';
 import type { Framework } from '../Models/Framework';
 import type { Database } from '../Models/Database';
+import { getStorageUrl } from '../Services/api';
 
 type TabKey = 'all' | 'frameworks' | 'databases' | 'tools';
 type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
+type SkillGroup = 'frameworks' | 'databases' | 'tools';
+
+interface SkillItem {
+  id: string; // toujours préfixé par "group-" => unique même en vue "all"
+  name: string;
+  badge?: string;
+  iconUrl?: string;
+  level: number;
+  group: SkillGroup;
+}
+
+interface OrbitLayout {
+  radius: number;
+  baseAngle: number;
+  ring: number;
+  ySeed: number;
+  speed: number;
+}
+
+function clampPct(v: number) {
+  return Math.min(100, Math.max(0, v));
+}
 
 /* ============================================================
    THEME — un "univers" visuel distinct par catégorie
@@ -98,12 +119,14 @@ function useScrollDepth() {
   return depth;
 }
 
+function clamp01(v: number) {
+  return Math.min(1, Math.max(0, v));
+}
+
 /* ============================================================
-   SCENE 3D — laboratoire technologique en arrière-plan
-   (ambiance immersive ; les cartes de compétences réelles
-   restent en DOM pour rester nettes, accessibles et légères)
+   SCENE 3D DE FOND — laboratoire technologique (inchangé)
    ============================================================ */
-function FloatingShape({
+function BackgroundFloatingShape({
   position,
   geometry,
   speed,
@@ -139,7 +162,7 @@ function FloatingShape({
   );
 }
 
-function SkillCore({ accent }: { accent: string }) {
+function BackgroundCore({ accent }: { accent: string }) {
   const ref = useRef<THREE.Mesh>(null);
   const current = useRef(new THREE.Color(accent));
   const target = useMemo(() => new THREE.Color(accent), [accent]);
@@ -163,7 +186,7 @@ function SkillCore({ accent }: { accent: string }) {
   );
 }
 
-function ConnectionLines({ points, accent }: { points: [number, number, number][]; accent: string }) {
+function BackgroundConnectionLines({ points, accent }: { points: [number, number, number][]; accent: string }) {
   const segments = useMemo(
     () => points.map((p) => [p, [0, 0, -1.5] as [number, number, number]] as [[number, number, number], [number, number, number]]),
     [points]
@@ -177,7 +200,7 @@ function ConnectionLines({ points, accent }: { points: [number, number, number][
   );
 }
 
-function Particles({ count, accent }: { count: number; accent: string }) {
+function BackgroundParticles({ count, accent }: { count: number; accent: string }) {
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -203,7 +226,7 @@ function Particles({ count, accent }: { count: number; accent: string }) {
   );
 }
 
-function SceneRig({
+function BackgroundSceneRig({
   children,
   mouse,
   scroll
@@ -245,11 +268,11 @@ function LabBackground3D({ activeTab, isMobile }: { activeTab: TabKey; isMobile:
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
-        <SceneRig mouse={mouse} scroll={scroll}>
-          <SkillCore accent={theme.accent} />
-          <Particles count={isMobile ? 50 : 140} accent={theme.accent} />
+        <BackgroundSceneRig mouse={mouse} scroll={scroll}>
+          <BackgroundCore accent={theme.accent} />
+          <BackgroundParticles count={isMobile ? 50 : 140} accent={theme.accent} />
           {visibleShapes.map((pos, i) => (
-            <FloatingShape
+            <BackgroundFloatingShape
               key={i}
               position={pos}
               geometry={theme.geometries[i % theme.geometries.length]}
@@ -257,15 +280,14 @@ function LabBackground3D({ activeTab, isMobile }: { activeTab: TabKey; isMobile:
               color={theme.accent}
             />
           ))}
-          {!isMobile && <ConnectionLines points={visibleShapes} accent={theme.accent} />}
-        </SceneRig>
+          {!isMobile && <BackgroundConnectionLines points={visibleShapes} accent={theme.accent} />}
+        </BackgroundSceneRig>
       </Canvas>
     </div>
   );
 }
 
 function StaticBackground({ accent }: { accent: string }) {
-  // Fallback pour "prefers-reduced-motion" : ambiance sans animation
   return (
     <div
       style={{
@@ -279,29 +301,8 @@ function StaticBackground({ accent }: { accent: string }) {
   );
 }
 
-function PortalFlash({ activeKey, accent }: { activeKey: string; accent: string }) {
-  return (
-    <AnimatePresence>
-      <motion.div
-        key={activeKey}
-        initial={{ opacity: 0.5 }}
-        animate={{ opacity: 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.9, ease: 'easeOut' }}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 1,
-          pointerEvents: 'none',
-          background: `radial-gradient(circle at 50% 35%, ${accent}55, transparent 60%)`
-        }}
-      />
-    </AnimatePresence>
-  );
-}
-
 /* ============================================================
-   CARTE PHOTO AVEC EFFET TILT 3D (conservée)
+   CARTE PHOTO AVEC EFFET TILT 3D (inchangée)
    ============================================================ */
 function PhotoTiltCard({ children, accent }: { children: React.ReactNode; accent: string }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -342,42 +343,219 @@ function PhotoTiltCard({ children, accent }: { children: React.ReactNode; accent
 }
 
 /* ============================================================
-   ANNEAU DE MAÎTRISE — remplace la barre de progression
+   DISPOSITION ORBITALE DYNAMIQUE
    ============================================================ */
-function CircularLevel({ percentage, accent, size = 56 }: { percentage: number; accent: string; size?: number }) {
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+
+function useOrbitLayout(count: number, isMobile: boolean): OrbitLayout[] {
+  return useMemo(() => {
+    const maxPerRing = isMobile ? 6 : 9;
+    const rings = Math.max(1, Math.ceil(count / maxPerRing));
+    const baseRadius = isMobile ? 2.4 : 3.3;
+    const ringGap = isMobile ? 1.0 : 1.45;
+    const layout: OrbitLayout[] = [];
+    for (let i = 0; i < count; i++) {
+      const ring = i % rings;
+      const indexInRing = Math.floor(i / rings);
+      layout.push({
+        radius: baseRadius + ring * ringGap,
+        baseAngle: indexInRing * GOLDEN_ANGLE + ring * 0.6,
+        ring,
+        ySeed: (i * 0.37) % (Math.PI * 2),
+        speed: 0.05 + (ring % 3) * 0.015 + (i % 5) * 0.003
+      });
+    }
+    return layout;
+  }, [count, isMobile]);
+}
+
+function nodePosition(t: number, layout: OrbitLayout, hovered: boolean, ringCountFactor: number): [number, number, number] {
+  const angle = layout.baseAngle + t * layout.speed;
+  const wobble = Math.sin(t * 0.6 + layout.ySeed) * 0.12;
+  const radius = layout.radius + wobble + (hovered ? -0.55 : 0);
+  const y = Math.sin(t * 0.5 + layout.ySeed) * 0.35 + Math.sin(layout.ring * 1.7) * 0.5 * ringCountFactor;
+  return [Math.cos(angle) * radius, y, Math.sin(angle) * radius];
+}
+
+/* ============================================================
+   CAMERA RIG DE LA SCÈNE ORBITALE
+   ============================================================ */
+function OrbitCameraRig({
+  mouse,
+  scroll,
+  pulsing
+}: {
+  mouse: React.MutableRefObject<{ x: number; y: number }>;
+  scroll: React.MutableRefObject<number>;
+  pulsing: boolean;
+}) {
+  const pulse = useRef(0);
+  useFrame(({ camera }) => {
+    pulse.current += ((pulsing ? 1 : 0) - pulse.current) * 0.06;
+    const targetX = mouse.current.x * 1.1;
+    const targetY = 1.1 - mouse.current.y * 0.7;
+    camera.position.x += (targetX - camera.position.x) * 0.02;
+    camera.position.y += (targetY - camera.position.y) * 0.02;
+    const targetZ = 9 - scroll.current * 1.6 - pulse.current * 2.2;
+    camera.position.z += (targetZ - camera.position.z) * 0.035;
+    camera.lookAt(0, 0, 0);
+  });
+  return null;
+}
+
+/* ============================================================
+   NOYAU DES COMPÉTENCES (pulsation lors des transitions d'onglet)
+   ============================================================ */
+function SkillOrbitCore({ accent, pulsing }: { accent: string; pulsing: boolean }) {
+  const coreRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  const ring1 = useRef<THREE.Mesh>(null);
+  const ring2 = useRef<THREE.Mesh>(null);
+  const current = useRef(new THREE.Color(accent));
+  const target = useMemo(() => new THREE.Color(accent), [accent]);
+  const intensity = useRef(0);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    intensity.current += ((pulsing ? 1 : 0) - intensity.current) * 0.08;
+    current.current.lerp(target, 0.03);
+
+    if (coreRef.current) {
+      const pulse = 1 + Math.sin(t * 0.6) * 0.05 + intensity.current * 0.35;
+      coreRef.current.scale.setScalar(pulse);
+      coreRef.current.rotation.y = t * 0.12;
+      coreRef.current.rotation.x = t * 0.07;
+      const mat = coreRef.current.material as THREE.MeshBasicMaterial;
+      mat.color.copy(current.current);
+      mat.opacity = 0.16 + intensity.current * 0.5;
+    }
+    if (glowRef.current) {
+      const s = 1.9 + intensity.current * 0.8;
+      glowRef.current.scale.setScalar(s);
+      (glowRef.current.material as THREE.MeshBasicMaterial).opacity = 0.05 + intensity.current * 0.18;
+    }
+    if (ring1.current) {
+      ring1.current.rotation.x = t * 0.25;
+      ring1.current.rotation.z = t * 0.1;
+    }
+    if (ring2.current) {
+      ring2.current.rotation.y = t * 0.2;
+      ring2.current.rotation.z = -t * 0.15;
+    }
+  });
+
+  return (
+    <group>
+      <mesh ref={glowRef}>
+        <icosahedronGeometry args={[1.6, 1]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.06} />
+      </mesh>
+      <mesh ref={coreRef}>
+        <icosahedronGeometry args={[1.05, 1]} />
+        <meshBasicMaterial color={accent} wireframe transparent opacity={0.16} />
+      </mesh>
+      <mesh ref={ring1} rotation={[Math.PI / 2.3, 0, 0]}>
+        <torusGeometry args={[1.85, 0.012, 8, 100]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.3} />
+      </mesh>
+      <mesh ref={ring2} rotation={[Math.PI / 3.4, Math.PI / 5, 0]}>
+        <torusGeometry args={[2.25, 0.008, 8, 100]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ============================================================
+   COUCHE DE PARTICULES ORBITALES
+   ============================================================ */
+function OrbitParticleLayer({
+  count,
+  accent,
+  spread,
+  speed,
+  converge
+}: {
+  count: number;
+  accent: string;
+  spread: number;
+  speed: number;
+  converge: boolean;
+}) {
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] = (Math.random() - 0.5) * spread;
+      arr[i * 3 + 1] = (Math.random() - 0.5) * spread * 0.55;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * spread - spread * 0.2;
+    }
+    return arr;
+  }, [count, spread]);
+
+  const groupRef = useRef<THREE.Group>(null);
+  const pointsRef = useRef<THREE.Points>(null);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (pointsRef.current) pointsRef.current.rotation.y = t * speed;
+    if (groupRef.current) {
+      const targetScale = converge ? 0.05 : 1;
+      groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.06);
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      <points ref={pointsRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} args={[positions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial color={accent} size={0.025} transparent opacity={0.45} sizeAttenuation />
+      </points>
+    </group>
+  );
+}
+
+/* ============================================================
+   ANNEAU DE MAÎTRISE — piloté par un spring physique
+   (se relance à chaque montage, donc à chaque survol puisque
+   le composant n'est monté que quand le nœud est actif)
+   ============================================================ */
+function CircularLevel({ percentage, accent, size = 40 }: { percentage: number; accent: string; size?: number }) {
   const radius = (size - 6) / 2;
   const circumference = 2 * Math.PI * radius;
+
+  const motionPercentage = useMotionValue(0);
+  const springPercentage = useSpring(motionPercentage, { stiffness: 140, damping: 14, mass: 0.7 });
+  const dashOffset = useTransform(springPercentage, (v) => circumference - (clampPct(v) / 100) * circumference);
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    let raf = 0;
-    const start = performance.now();
-    const duration = 1100;
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(percentage * eased));
-      if (progress < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
+    // Départ à 0 puis élan vers la vraie valeur -> effet "chargement" à chaque survol
+    motionPercentage.set(0);
+    const raf = requestAnimationFrame(() => motionPercentage.set(percentage));
     return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentage]);
+
+  useEffect(() => {
+    const unsubscribe = springPercentage.on('change', (v) => setDisplay(Math.round(clampPct(v))));
+    return unsubscribe;
+  }, [springPercentage]);
 
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4} />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={3} />
       <motion.circle
         cx={size / 2}
         cy={size / 2}
         r={radius}
         fill="none"
         stroke={accent}
-        strokeWidth={4}
+        strokeWidth={3}
         strokeLinecap="round"
         strokeDasharray={circumference}
-        initial={{ strokeDashoffset: circumference }}
-        animate={{ strokeDashoffset: circumference - (percentage / 100) * circumference }}
-        transition={{ duration: 1.1, ease: 'easeOut' }}
+        style={{ strokeDashoffset: dashOffset }}
       />
       <text
         x="50%"
@@ -385,7 +563,7 @@ function CircularLevel({ percentage, accent, size = 56 }: { percentage: number; 
         transform={`rotate(90 ${size / 2} ${size / 2})`}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={size * 0.24}
+        fontSize={size * 0.26}
         fontFamily="monospace"
         fontWeight={700}
         fill="#ffffff"
@@ -397,122 +575,381 @@ function CircularLevel({ percentage, accent, size = 56 }: { percentage: number; 
 }
 
 /* ============================================================
-   CARTE TECHNOLOGIE — glassmorphism + tilt 3D + glow
+   PANNEAU HOLOGRAPHIQUE (info compétence au survol)
    ============================================================ */
-function TechCard({
-  name,
-  badge,
-  iconUrl,
-  percentage,
-  accent,
-  glow,
-  index
-}: {
-  name: string;
-  badge?: string;
-  iconUrl?: string;
-  percentage: number;
-  accent: string;
-  glow: string;
-  index: number;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [hovered, setHovered] = useState(false);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), { stiffness: 200, damping: 20 });
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), { stiffness: 200, damping: 20 });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = cardRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
-    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
-  };
-  const handleLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-    setHovered(false);
-  };
-
+function HolographicPanel({ item, accent, active }: { item: SkillItem; accent: string; active: boolean }) {
   return (
     <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={handleLeave}
-      initial={{ opacity: 0, y: 50, rotateX: -18, filter: 'blur(6px)' }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.6, delay: Math.min(index * 0.05, 0.6), ease: 'easeOut' }}
-      style={{ rotateX, rotateY, transformStyle: 'preserve-3d', transformPerspective: 900, height: '100%' }}
+      style={{
+        width: active ? 172 : 128,
+        padding: active ? '12px 14px' : '7px 10px',
+        borderRadius: 12,
+        background: 'linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))',
+        border: `1px solid ${active ? accent : accent + '55'}`,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        color: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        overflow: 'hidden',
+        position: 'relative',
+        userSelect: 'none',
+        pointerEvents: 'none',
+        whiteSpace: 'nowrap'
+      }}
+      animate={{
+        scale: active ? 1 : 0.94,
+        y: active ? -3 : 0,
+        boxShadow: active
+          ? [`0 0 12px ${accent}55`, `0 0 26px ${accent}99`, `0 0 12px ${accent}55`]
+          : `0 0 8px ${accent}22`
+      }}
+      transition={
+        active
+          ? { boxShadow: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }, scale: { duration: 0.25 }, y: { duration: 0.25 } }
+          : { duration: 0.25 }
+      }
     >
-      <motion.div
-        animate={{ scale: hovered ? 1.03 : 1, y: hovered ? -4 : 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-        className="h-100 p-4 position-relative"
-        style={{
-          borderRadius: '18px',
-          background: 'linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
-          border: `1px solid ${hovered ? accent : 'rgba(255,255,255,0.12)'}`,
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          boxShadow: hovered ? `0 0 28px ${glow}, inset 0 0 22px ${glow}` : '0 4px 18px rgba(0,0,0,0.25)',
-          transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
-        }}
-      >
-        <div className="d-flex align-items-center mb-3 gap-3">
-          {iconUrl ? (
-            <img
-              src={iconUrl}
-              alt={name}
-              style={{
-                width: 44,
-                height: 44,
-                objectFit: 'contain',
-                borderRadius: 10,
-                background: 'rgba(255,255,255,0.06)',
-                padding: 6,
-                border: '1px solid rgba(255,255,255,0.12)'
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 10,
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <MdImage size={20} color="#94a3b8" />
-            </div>
-          )}
-          <div className="flex-grow-1">
-            <h6 className="fw-bold mb-1 text-white">{name}</h6>
-            {badge && (
-              <span
-                className="badge px-2 py-1 fw-semibold"
-                style={{ backgroundColor: `${accent}26`, color: accent, fontSize: '0.7rem', borderRadius: 6 }}
-              >
-                {badge}
-              </span>
-            )}
-          </div>
+      {active && (
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            width: '40%',
+            background: `linear-gradient(90deg, transparent, ${accent}33, transparent)`,
+            pointerEvents: 'none'
+          }}
+          initial={{ x: '-60%' }}
+          animate={{ x: '160%' }}
+          transition={{ duration: 1.3, repeat: Infinity, ease: 'linear', repeatDelay: 0.4 }}
+        />
+      )}
+
+      {item.iconUrl ? (
+        <img
+          src={item.iconUrl}
+          alt={item.name}
+          style={{ width: active ? 26 : 20, height: active ? 26 : 20, objectFit: 'contain', flexShrink: 0 }}
+        />
+      ) : (
+        <MdImage size={active ? 18 : 14} color="#94a3b8" />
+      )}
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: active ? 12.5 : 10.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {item.name}
         </div>
-        <div className="d-flex justify-content-between align-items-center">
-          <span className="font-monospace" style={{ fontSize: '0.7rem', color: '#94a3b8', letterSpacing: '1px' }}>
-            MAÎTRISE
-          </span>
-          <CircularLevel percentage={percentage} accent={accent} />
-        </div>
-      </motion.div>
+        {active && item.badge && (
+          <div style={{ fontSize: 9, color: accent, textTransform: 'uppercase', letterSpacing: 1 }}>{item.badge}</div>
+        )}
+      </div>
+      {active && <CircularLevel percentage={item.level} accent={accent} size={34} />}
     </motion.div>
+  );
+}
+
+/* ============================================================
+   ANNEAU "PING" — effet radar/sonar au survol
+   ============================================================ */
+function HoverPingRing({ accent, active }: { accent: string; active: boolean }) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const startTime = useRef<number | null>(null);
+
+  useFrame(({ clock }) => {
+    const mesh = ringRef.current;
+    if (!mesh) return;
+    const t = clock.getElapsedTime();
+
+    if (!active) {
+      startTime.current = null;
+      (mesh.material as THREE.MeshBasicMaterial).opacity = 0;
+      return;
+    }
+    if (startTime.current === null) startTime.current = t;
+
+    const duration = 1.1;
+    const elapsed = (t - startTime.current) % duration;
+    const progress = elapsed / duration;
+    const scale = 0.4 + progress * 1.6;
+    mesh.scale.setScalar(scale);
+    (mesh.material as THREE.MeshBasicMaterial).opacity = 0.55 * (1 - progress);
+  });
+
+  return (
+    <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[0.22, 0.27, 32]} />
+      <meshBasicMaterial color={accent} transparent opacity={0} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+/* ============================================================
+   HALO LUMINEUX au survol
+   ============================================================ */
+function HoverGlow({ accent, active }: { accent: string; active: boolean }) {
+  const glowRef = useRef<THREE.Mesh>(null);
+  const scaleRef = useRef(0);
+
+  useFrame(() => {
+    const mesh = glowRef.current;
+    if (!mesh) return;
+    const targetScale = active ? 1 : 0;
+    scaleRef.current += (targetScale - scaleRef.current) * 0.15;
+    const s = 0.15 + scaleRef.current * 0.55;
+    mesh.scale.setScalar(s);
+    (mesh.material as THREE.MeshBasicMaterial).opacity = scaleRef.current * 0.5;
+  });
+
+  return (
+    <mesh ref={glowRef}>
+      <sphereGeometry args={[1, 16, 16]} />
+      <meshBasicMaterial color={accent} transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} />
+    </mesh>
+  );
+}
+
+/* ============================================================
+   NŒUD DE COMPÉTENCE ORBITAL
+   ============================================================ */
+function SkillNode({
+  item,
+  layout,
+  index,
+  accent,
+  hoveredId,
+  setHoveredId,
+  collapsing,
+  ringCountFactor
+}: {
+  item: SkillItem;
+  layout: OrbitLayout;
+  index: number;
+  accent: string;
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+  collapsing: boolean;
+  ringCountFactor: number;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lineRef = useRef<any>(null);
+  const flowRef = useRef<THREE.Mesh>(null);
+  const spawnStart = useRef<number | null>(null);
+  const collapseStart = useRef<number | null>(null);
+
+  const isHovered = hoveredId === item.id;
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (spawnStart.current === null) spawnStart.current = t + index * 0.025;
+    const spawnEase = 1 - Math.pow(1 - clamp01((t - spawnStart.current) / 0.9), 3);
+
+    if (collapsing) {
+      if (collapseStart.current === null) collapseStart.current = t;
+    } else {
+      collapseStart.current = null;
+    }
+    const collapseP = collapseStart.current !== null ? clamp01((t - collapseStart.current) / 0.4) : 0;
+    const shrink = 1 - collapseP;
+
+    const [bx, by, bz] = nodePosition(t, layout, isHovered, ringCountFactor);
+    const x = bx * spawnEase * shrink;
+    const y = by * spawnEase * shrink;
+    const z = bz * spawnEase * shrink;
+
+    if (groupRef.current) {
+      groupRef.current.position.set(x, y, z);
+      const targetScale = (isHovered ? 1.4 : hoveredId && hoveredId !== item.id ? 0.72 : 1) * spawnEase;
+      groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+    }
+    if (meshRef.current) {
+      const spin = isHovered ? 1.8 : 1;
+      meshRef.current.rotation.y = t * 0.4 * spin;
+      meshRef.current.rotation.x = t * 0.25 * spin;
+    }
+    if (lineRef.current?.geometry?.setPositions) {
+      lineRef.current.geometry.setPositions([0, 0, 0, x, y, z]);
+    }
+    if (flowRef.current) {
+      const flowT = (t * 0.5 + layout.ySeed) % 1;
+      flowRef.current.position.set(x * flowT, y * flowT, z * flowT);
+      (flowRef.current.material as THREE.MeshBasicMaterial).opacity = 0.7 * spawnEase;
+    }
+  });
+
+  return (
+    <group>
+      <Line
+        ref={lineRef}
+        points={[
+          [0, 0, 0],
+          [0, 0, 0]
+        ]}
+        color={accent}
+        transparent
+        opacity={isHovered ? 0.9 : 0.22}
+        lineWidth={1}
+      />
+      <mesh ref={flowRef}>
+        <sphereGeometry args={[0.03, 8, 8]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.7} />
+      </mesh>
+      <group
+        ref={groupRef}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHoveredId(item.id);
+        }}
+        onPointerOut={() => setHoveredId(null)}
+      >
+        <HoverGlow accent={accent} active={isHovered} />
+        <HoverPingRing accent={accent} active={isHovered} />
+
+        <mesh ref={meshRef}>
+          <icosahedronGeometry args={[0.2, 0]} />
+          <meshBasicMaterial color={accent} wireframe transparent opacity={0.85} />
+        </mesh>
+        <Html center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+          <HolographicPanel item={item} accent={accent} active={isHovered} />
+        </Html>
+      </group>
+    </group>
+  );
+}
+
+/* ============================================================
+   FLASH DE TRANSITION LORS DU CHANGEMENT D'ONGLET
+   ============================================================ */
+function OrbitPortalFlash({ active, accent }: { active: boolean; accent: string }) {
+  return (
+    <AnimatePresence>
+      {active && (
+        <motion.div
+          key="flash"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 0.55, 0] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.9, ease: 'easeOut' }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 3,
+            pointerEvents: 'none',
+            background: `radial-gradient(circle at 50% 55%, ${accent}, transparent 62%)`
+          }}
+        />
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ============================================================
+   CANVAS DÉDIÉ À L'AFFICHAGE ORBITAL DES COMPÉTENCES
+   ============================================================ */
+function SkillsOrbitCanvas({
+  theme,
+  items,
+  layouts,
+  ringCountFactor,
+  hoveredId,
+  setHoveredId,
+  collapsing,
+  flash,
+  isMobile,
+  displayedTab
+}: {
+  theme: { accent: string };
+  items: SkillItem[];
+  layouts: OrbitLayout[];
+  ringCountFactor: number;
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+  collapsing: boolean;
+  flash: boolean;
+  isMobile: boolean;
+  displayedTab: TabKey;
+}) {
+  const mouse = useMousePosition();
+  const scroll = useScrollDepth();
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'auto' }}>
+      <Canvas camera={{ position: [0, 1.1, 9], fov: 52 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
+        <OrbitCameraRig mouse={mouse} scroll={scroll} pulsing={collapsing || flash} />
+        <OrbitParticleLayer count={isMobile ? 25 : 60} accent={theme.accent} spread={20} speed={0.01} converge={collapsing || flash} />
+        <OrbitParticleLayer count={isMobile ? 20 : 50} accent={theme.accent} spread={9} speed={0.025} converge={collapsing || flash} />
+        <OrbitParticleLayer count={isMobile ? 12 : 30} accent={theme.accent} spread={4} speed={0.05} converge={collapsing || flash} />
+        <SkillOrbitCore accent={theme.accent} pulsing={collapsing || flash} />
+        {items.map((item, index) => (
+          /* item.id est "group-rawId" => unique globalement, y compris
+             quand plusieurs tables partagent le même id numérique */
+          <SkillNode
+            key={`${displayedTab}-${item.id}`}
+            item={item}
+            index={index}
+            layout={layouts[index]}
+            accent={UNIVERSE[item.group].accent}
+            hoveredId={hoveredId}
+            setHoveredId={setHoveredId}
+            collapsing={collapsing}
+            ringCountFactor={ringCountFactor}
+          />
+        ))}
+      </Canvas>
+    </div>
+  );
+}
+
+/* ============================================================
+   FALLBACK STATIQUE (prefers-reduced-motion)
+   ============================================================ */
+function ReducedMotionSkillsFallback({ items }: { items: SkillItem[] }) {
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  return (
+    <div style={{ position: 'relative', zIndex: 2, padding: '20px 0 40px', display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
+      {items.map((item) => {
+        const accent = UNIVERSE[item.group].accent;
+        const isHovered = hoveredId === item.id;
+        return (
+          <div
+            key={item.id}
+            onMouseEnter={() => setHoveredId(item.id)}
+            onMouseLeave={() => setHoveredId(null)}
+            style={{
+              width: 160,
+              padding: '12px 14px',
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.05)',
+              border: `1px solid ${isHovered ? accent : accent + '55'}`,
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              transform: isHovered ? 'translateY(-3px) scale(1.04)' : 'none',
+              boxShadow: isHovered ? `0 0 20px ${accent}55` : 'none',
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease'
+            }}
+          >
+            {item.iconUrl ? (
+              <img src={item.iconUrl} alt={item.name} style={{ width: 24, height: 24, objectFit: 'contain' }} />
+            ) : (
+              <MdImage color="#94a3b8" />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+              {isHovered ? (
+                <CircularLevel percentage={item.level} accent={accent} size={26} />
+              ) : (
+                <div style={{ fontSize: 10, color: accent }}>{item.level}%</div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -521,7 +958,11 @@ function TechCard({
    ============================================================ */
 export default function SkillsContent() {
   const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [displayedTab, setDisplayedTab] = useState<TabKey>('all');
+  const [collapsing, setCollapsing] = useState(false);
+  const [flash, setFlash] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
   const [databases, setDatabases] = useState<Database[]>([]);
@@ -531,7 +972,6 @@ export default function SkillsContent() {
   const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  // État pour alterner les photos toutes les 2 secondes avec transition fluide
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
   const photos = [photo1];
 
@@ -588,11 +1028,63 @@ export default function SkillsContent() {
   const totalCount = filteredFrameworks.length + filteredDatabases.length + filteredTools.length;
   const theme = UNIVERSE[activeTab];
 
-  const levelOf = (item: any) => {
-    const raw = item.level ? String(item.level).replace('%', '').trim() : '0';
-    return isNaN(Number(raw)) ? 50 : Number(raw);
+const iconOf = (item: any) => getStorageUrl(item.icon);
+  // Extraction du niveau en tenant compte du VRAI modèle de données :
+  // - Framework  -> proficiency (pas "level")
+  // - Database   -> level
+  // - Tool       -> level
+  const levelFrom = (raw: any, group: SkillGroup) => {
+    const source = group === 'frameworks' ? raw.proficiency : raw.level;
+    const num = Number(String(source ?? '0').replace('%', '').trim());
+    return isNaN(num) ? 50 : clampPct(num);
   };
-  const iconOf = (item: any) => (item.icon ? `http://127.0.0.1:8000/storage/${item.icon}` : undefined);
+
+  // Badge : Framework -> category, Database -> type, Tool -> category
+  // (avant, les frameworks lisaient "type", un champ qui n'existe pas
+  // sur le modèle Framework -> le badge était toujours vide)
+  const badgeFrom = (raw: any, group: SkillGroup) => {
+    if (group === 'databases') return raw.type;
+    return raw.category;
+  };
+
+  const toSkillItem = (raw: any, group: SkillGroup): SkillItem => ({
+    id: `${group}-${raw.id ?? raw.name}`,
+    name: raw.name,
+    badge: badgeFrom(raw, group),
+    iconUrl: iconOf(raw),
+    level: levelFrom(raw, group),
+    group
+  });
+
+  const items3D: SkillItem[] = useMemo(() => {
+    let base: SkillItem[] = [];
+    if (displayedTab === 'all' || displayedTab === 'frameworks') {
+      base = base.concat(filteredFrameworks.map((f: any) => toSkillItem(f, 'frameworks')));
+    }
+    if (displayedTab === 'all' || displayedTab === 'databases') {
+      base = base.concat(filteredDatabases.map((d: any) => toSkillItem(d, 'databases')));
+    }
+    if (displayedTab === 'all' || displayedTab === 'tools') {
+      base = base.concat(filteredTools.map((tl: any) => toSkillItem(tl, 'tools')));
+    }
+    return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayedTab, filteredFrameworks, filteredDatabases, filteredTools]);
+
+  const layouts = useOrbitLayout(items3D.length, isMobile);
+  const ringCountFactor = layouts.length ? Math.min(1, new Set(layouts.map((l) => l.ring)).size / 3) : 0;
+
+  const changeTab = (next: TabKey) => {
+    if (next === activeTab || collapsing) return;
+    setActiveTab(next);
+    setCollapsing(true);
+    window.setTimeout(() => {
+      setFlash(true);
+      setDisplayedTab(next);
+      setCollapsing(false);
+    }, 420);
+    window.setTimeout(() => setFlash(false), 420 + 550);
+  };
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: '#020617', paddingTop: '80px', paddingBottom: '60px' }}>
@@ -601,10 +1093,24 @@ export default function SkillsContent() {
       ) : (
         <LabBackground3D activeTab={activeTab} isMobile={isMobile} />
       )}
-      {!prefersReducedMotion && <PortalFlash activeKey={activeTab} accent={theme.accent} />}
+
+      {!prefersReducedMotion && !loading && totalCount > 0 && (
+        <SkillsOrbitCanvas
+          theme={theme}
+          items={items3D}
+          layouts={layouts}
+          ringCountFactor={ringCountFactor}
+          hoveredId={hoveredId}
+          setHoveredId={setHoveredId}
+          collapsing={collapsing}
+          flash={flash}
+          isMobile={isMobile}
+          displayedTab={displayedTab}
+        />
+      )}
+      <OrbitPortalFlash active={flash} accent={theme.accent} />
 
       <div className="container-fluid position-relative py-4 px-4 px-lg-5" style={{ zIndex: 2, color: '#ffffff' }}>
-        {/* En-tête */}
         <div className="row align-items-center mb-5 g-4" data-aos="fade-up">
           <div className="col-lg-7 text-start">
             <div
@@ -698,7 +1204,6 @@ export default function SkillsContent() {
           </div>
         </div>
 
-        {/* Recherche + Onglets */}
         <div className="row justify-content-center mb-5 g-3" data-aos="fade-up" data-aos-delay="100">
           <div className="col-12 col-md-6 col-lg-5">
             <div
@@ -738,7 +1243,7 @@ export default function SkillsContent() {
               return (
                 <button
                   key={key}
-                  onClick={() => setActiveTab(key)}
+                  onClick={() => changeTab(key)}
                   className="btn fw-bold px-4 py-2 shadow-sm"
                   style={{
                     backgroundColor: isActive ? t.accent : 'rgba(255, 255, 255, 0.08)',
@@ -767,99 +1272,10 @@ export default function SkillsContent() {
           >
             <h4 className="fw-semibold text-white">Aucun résultat trouvé pour votre recherche.</h4>
           </div>
+        ) : prefersReducedMotion ? (
+          <ReducedMotionSkillsFallback items={items3D} />
         ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              className="row g-4"
-              initial={{ opacity: 0, scale: 0.9, rotateX: 12, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, scale: 1, rotateX: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 1.08, rotateX: -12, filter: 'blur(8px)' }}
-              transition={{ duration: 0.55, ease: 'easeOut' }}
-              style={{ transformPerspective: 1200 }}
-            >
-              {/* FRAMEWORKS */}
-              {(activeTab === 'all' || activeTab === 'frameworks') && filteredFrameworks.length > 0 && (
-                <div className="col-12 mb-4" data-aos="fade-up">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="p-2 rounded-3 me-2 shadow-sm" style={{ backgroundColor: `${UNIVERSE.frameworks.accent}33`, color: UNIVERSE.frameworks.accent }}>
-                      <MdCode size={24} />
-                    </div>
-                    <h3 className="fw-bold mb-0 text-white">Frameworks & Langages</h3>
-                  </div>
-                  <div className="row g-4">
-                    {filteredFrameworks.map((fw: any, index: number) => (
-                      <div className="col-12 col-md-6 col-lg-4" key={fw.id || index}>
-                        <TechCard
-                          name={fw.name}
-                          badge={fw.type}
-                          iconUrl={iconOf(fw)}
-                          percentage={levelOf(fw)}
-                          accent={UNIVERSE.frameworks.accent}
-                          glow={UNIVERSE.frameworks.glow}
-                          index={index}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* DATABASES */}
-              {(activeTab === 'all' || activeTab === 'databases') && filteredDatabases.length > 0 && (
-                <div className="col-12 mb-4" data-aos="fade-up">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="p-2 rounded-3 me-2 shadow-sm" style={{ backgroundColor: `${UNIVERSE.databases.accent}33`, color: UNIVERSE.databases.accent }}>
-                      <MdStorage size={24} />
-                    </div>
-                    <h3 className="fw-bold mb-0 text-white">Bases de Données</h3>
-                  </div>
-                  <div className="row g-4">
-                    {filteredDatabases.map((db: any, index: number) => (
-                      <div className="col-12 col-md-6 col-lg-4" key={db.id || index}>
-                        <TechCard
-                          name={db.name}
-                          badge={db.type}
-                          iconUrl={iconOf(db)}
-                          percentage={levelOf(db)}
-                          accent={UNIVERSE.databases.accent}
-                          glow={UNIVERSE.databases.glow}
-                          index={index}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TOOLS */}
-              {(activeTab === 'all' || activeTab === 'tools') && filteredTools.length > 0 && (
-                <div className="col-12 mb-4" data-aos="fade-up">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="p-2 rounded-3 me-2 shadow-sm" style={{ backgroundColor: `${UNIVERSE.tools.accent}33`, color: UNIVERSE.tools.accent }}>
-                      <MdBuild size={24} />
-                    </div>
-                    <h3 className="fw-bold mb-0 text-white">Outils & DevOps</h3>
-                  </div>
-                  <div className="row g-4">
-                    {filteredTools.map((tool: any, index: number) => (
-                      <div className="col-12 col-md-6 col-lg-4" key={tool.id || index}>
-                        <TechCard
-                          name={tool.name}
-                          badge={tool.category}
-                          iconUrl={iconOf(tool)}
-                          percentage={levelOf(tool)}
-                          accent={UNIVERSE.tools.accent}
-                          glow={UNIVERSE.tools.glow}
-                          index={index}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+          <div style={{ minHeight: '75vh', position: 'relative' }} data-aos="fade-up" data-aos-delay="150" />
         )}
       </div>
     </div>

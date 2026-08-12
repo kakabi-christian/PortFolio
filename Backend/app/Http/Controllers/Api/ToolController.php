@@ -20,7 +20,7 @@ class ToolController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $tools
+            'data' => $tools,
         ]);
     }
 
@@ -41,7 +41,7 @@ class ToolController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Outil créé avec succès !',
-            'data' => $tool
+            'data' => $tool,
         ], 201);
     }
 
@@ -52,7 +52,7 @@ class ToolController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $tool
+            'data' => $tool,
         ]);
     }
 
@@ -78,7 +78,7 @@ class ToolController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Outil mis à jour avec succès !',
-            'data' => $tool
+            'data' => $tool,
         ]);
     }
 
@@ -95,7 +95,7 @@ class ToolController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Outil supprimé avec succès !'
+            'message' => 'Outil supprimé avec succès !',
         ]);
     }
 }

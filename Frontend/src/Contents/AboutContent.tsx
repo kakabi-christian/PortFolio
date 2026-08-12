@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 
-import photoVeste from '../assets/photo veste.jpeg';
+import photoVeste from '../assets/Photo About 2.png';
 
 type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
 
@@ -231,7 +231,7 @@ export default function AboutContent() {
   }, []);
 
   return (
-    <section className="py-5 text-light position-relative overflow-hidden" style={{ backgroundColor: '#0f172a', minHeight: '100vh' }}>
+    <section className="py-5 text-light position-relative overflow-hidden" style={{ backgroundColor: '#020617', minHeight: '100vh' }}>
       
       {/* Fond 3D Interactif Three.js unifié */}
       <AboutBackground3D />

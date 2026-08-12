@@ -33,6 +33,11 @@ type ShapeType = 'envelope' | 'paperplane' | 'bubble';
 type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
 
 /* ============================================================
+   THEME — mêmes couleurs que HomeContent / SkillsContent
+   ============================================================ */
+const ACCENT = '#38bdf8';
+
+/* ============================================================
    HOOKS UTILITAIRES POUR LE FOND 3D UNIFIÉ
    ============================================================ */
 function useIsMobile(breakpoint = 768) {
@@ -267,7 +272,7 @@ function ContactBackground3D() {
   const isMobile = useIsMobile();
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
-  const accent = '#38bdf8';
+  const accent = ACCENT;
 
   const shapeData = useMemo<Array<{ pos: [number, number, number]; type: ShapeType; speed: number; color: string }>>(() => [
     { pos: [-4, 2, -2], type: 'envelope', speed: 0.5, color: '#60a5fa' },
@@ -386,52 +391,52 @@ export default function ContactContent() {
   return (
     <div
       className="position-relative"
-      style={{ backgroundColor: 'var(--color-bg)', overflow: 'hidden', paddingTop: '80px', paddingBottom: '60px', minHeight: '100vh' }}
+      style={{ backgroundColor: '#020617', overflow: 'hidden', paddingTop: '80px', paddingBottom: '60px', minHeight: '100vh' }}
     >
       {/* Fond 3D interactif unifié avec Three.js */}
       <ContactBackground3D />
 
-      <div className="container-fluid position-relative py-4 px-4 px-lg-5" style={{ zIndex: 1 }}>
+      <div className="container-fluid position-relative py-4 px-4 px-lg-5" style={{ zIndex: 1, color: '#ffffff' }}>
 
         {/* En-tête : Texte aligné à gauche (start), Image agrandie et alignée à droite (end) */}
         <div className="row align-items-center mb-5 g-4" data-aos="fade-up">
           <div className="col-lg-7 text-start">
             <div
               className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3"
-              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: `1px solid ${ACCENT}55` }}
             >
-              <FaEnvelope style={{ color: 'var(--color-primary)' }} />
-              <span className="small text-uppercase fw-semibold" style={{ color: 'var(--color-primary)', letterSpacing: '2px' }}>
+              <FaEnvelope style={{ color: ACCENT }} />
+              <span className="small text-uppercase fw-semibold" style={{ color: ACCENT, letterSpacing: '2px' }}>
                 Contact
               </span>
             </div>
-            <h2 className="fw-bold display-5 mb-3" style={{ color: 'var(--color-text-main)' }}>
-              Discutons de <span style={{ color: 'var(--color-primary)' }}>votre projet</span>
+            <h2 className="fw-bold display-5 mb-3 text-white" style={{ letterSpacing: '-0.5px' }}>
+              Discutons de <span style={{ color: ACCENT }}>votre projet</span>
             </h2>
-            <p className="lead fs-6 mb-4" style={{ color: 'var(--color-text-muted)', maxWidth: '650px' }}>
+            <p className="lead fs-6 mb-4" style={{ color: '#cbd5e1', maxWidth: '650px' }}>
               Une idée, une question, une opportunité de stage ou simplement l'envie d'échanger ? Écrivez-moi, je réponds à chaque message.
             </p>
 
             {/* Blocs explicatifs intégrés pour clarifier la démarche */}
             <div className="row g-3 mt-2" style={{ maxWidth: '680px' }}>
               <div className="col-sm-6" data-aos="fade-up" data-aos-delay="100">
-                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                   <div className="d-flex align-items-center gap-2 mb-2">
-                    <FaLightbulb style={{ color: 'var(--color-primary)' }} className="fs-5" />
-                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Idée ou Collaboration</h6>
+                    <FaLightbulb style={{ color: ACCENT }} className="fs-5" />
+                    <h6 className="fw-bold mb-0 text-white">Idée ou Collaboration</h6>
                   </div>
-                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
+                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
                     Vous avez un projet web/mobile à concrétiser ou besoin d'expertise technique full-stack ? Exposons vos objectifs.
                   </p>
                 </div>
               </div>
               <div className="col-sm-6" data-aos="fade-up" data-aos-delay="200">
-                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                   <div className="d-flex align-items-center gap-2 mb-2">
-                    <FaRocket style={{ color: 'var(--color-success)' }} className="fs-5" />
-                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Opportunités & Stages</h6>
+                    <FaRocket style={{ color: '#22c55e' }} className="fs-5" />
+                    <h6 className="fw-bold mb-0 text-white">Opportunités & Stages</h6>
                   </div>
-                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
+                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
                     En quête d'un développeur passionné rigoureux et autonome ? Discutons de votre intégration au sein de votre équipe.
                   </p>
                 </div>
@@ -459,8 +464,8 @@ export default function ContactContent() {
                 <div
                   className="p-3 rounded-4 position-relative shadow-2xl"
                   style={{
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
                     zIndex: 1,
                     width: '100%',
                     maxWidth: '460px'
@@ -481,21 +486,21 @@ export default function ContactContent() {
         {/* Infos de contact rapides */}
         <div className="row g-3 mb-5">
           <div className="col-md-4" data-aos="fade-up" data-aos-delay="100">
-            <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-              <FaMapMarkerAlt className="fs-4 mb-2" style={{ color: 'var(--color-danger)' }} />
-              <p className="small mb-0" style={{ color: 'var(--color-text-main)' }}>Village-Elf / Akwa, Douala — Cameroun</p>
+            <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <FaMapMarkerAlt className="fs-4 mb-2" style={{ color: '#ef4444' }} />
+              <p className="small mb-0 text-white">Village-Elf / Akwa, Douala — Cameroun</p>
             </div>
           </div>
           <div className="col-md-4" data-aos="fade-up" data-aos-delay="200">
-            <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-              <FaPhoneAlt className="fs-4 mb-2" style={{ color: 'var(--color-success)' }} />
-              <p className="small mb-0" style={{ color: 'var(--color-text-main)' }}>+237 658 78 84 48</p>
+            <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <FaPhoneAlt className="fs-4 mb-2" style={{ color: '#22c55e' }} />
+              <p className="small mb-0 text-white">+237 658 78 84 48</p>
             </div>
           </div>
           <div className="col-md-4" data-aos="fade-up" data-aos-delay="300">
-            <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-              <FaClock className="fs-4 mb-2" style={{ color: 'var(--color-primary)' }} />
-              <p className="small mb-0" style={{ color: 'var(--color-text-main)' }}>Réponse sous 24-48h</p>
+            <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <FaClock className="fs-4 mb-2" style={{ color: ACCENT }} />
+              <p className="small mb-0 text-white">Réponse sous 24-48h</p>
             </div>
           </div>
         </div>
@@ -503,13 +508,13 @@ export default function ContactContent() {
         {/* Formulaire (en bas) */}
         <div
           className="p-3 p-lg-4 rounded-4 mb-5 mx-auto"
-          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', maxWidth: '560px' }}
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', maxWidth: '560px' }}
           data-aos="fade-up"
         >
-          <h3 className="fw-bold fs-4 mb-4 d-flex align-items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+          <h3 className="fw-bold fs-4 mb-4 d-flex align-items-center gap-2" style={{ color: ACCENT }}>
             <FaPaperPlane /> Envoyez-moi un message
           </h3>
-          <p className="small mb-4" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="small mb-4" style={{ color: '#94a3b8' }}>
             Remplissez les champs ci-dessous pour m'adresser directement votre requête. Je m'engage à l'analyser et à vous revenir rapidement.
           </p>
 
@@ -554,20 +559,20 @@ export default function ContactContent() {
               </button>
             </div>
 
-            {status === 'success' && <p style={{ color: 'var(--color-success)', textAlign: 'center' }} data-aos="fade-in">Message envoyé avec succès !</p>}
-            {status === 'error' && <p style={{ color: 'var(--color-danger)', textAlign: 'center' }} data-aos="fade-in">Une erreur est survenue.</p>}
+            {status === 'success' && <p style={{ color: '#22c55e', textAlign: 'center' }} data-aos="fade-in">Message envoyé avec succès !</p>}
+            {status === 'error' && <p style={{ color: '#ef4444', textAlign: 'center' }} data-aos="fade-in">Une erreur est survenue.</p>}
           </form>
         </div>
 
         {/* Réseaux sociaux */}
         <div className="text-center mb-5" data-aos="fade-up">
-          <p className="small mb-3" style={{ color: 'var(--color-text-muted)' }}>Ou retrouvez-moi directement sur :</p>
+          <p className="small mb-3" style={{ color: '#94a3b8' }}>Ou retrouvez-moi directement sur :</p>
           <div className="d-flex justify-content-center gap-3">
             <a
               href="https://github.com/kakabi-christian"
               target="_blank" rel="noopener noreferrer"
               className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
-              style={{ width: '44px', height: '44px', backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}
+              style={{ width: '44px', height: '44px', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: ACCENT, border: '1px solid rgba(255, 255, 255, 0.15)' }}
               title="GitHub"
             >
               <FaGithub size={20} />
@@ -576,7 +581,7 @@ export default function ContactContent() {
               href="https://www.linkedin.com/in/christian-kakabi-025373374"
               target="_blank" rel="noopener noreferrer"
               className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
-              style={{ width: '44px', height: '44px', backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}
+              style={{ width: '44px', height: '44px', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: ACCENT, border: '1px solid rgba(255, 255, 255, 0.15)' }}
               title="LinkedIn"
             >
               <FaLinkedin size={20} />
@@ -589,10 +594,10 @@ export default function ContactContent() {
   );
 }
 
-// Styles basés sur votre charte
+// Styles basés sur le thème sombre unifié
 const inputStyle: React.CSSProperties = {
-  backgroundColor: 'var(--color-bg)',
-  border: '1px solid var(--color-border)',
+  backgroundColor: '#020617',
+  border: '1px solid rgba(255, 255, 255, 0.15)',
   color: '#ffffff',
   padding: '12px',
   borderRadius: '8px',
@@ -601,8 +606,8 @@ const inputStyle: React.CSSProperties = {
 };
 
 const buttonStyle: React.CSSProperties = {
-  backgroundColor: 'var(--color-primary)',
-  color: '#ffffff',
+  backgroundColor: ACCENT,
+  color: '#020617',
   fontWeight: 'bold',
   padding: '12px',
   borderRadius: '8px',

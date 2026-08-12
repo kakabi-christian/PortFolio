@@ -106,20 +106,7 @@ const TopBarAdmin: React.FC<TopBarAdminProps> = ({ onMenuClick }) => {
                     }
                 </button>
 
-                {/* Notifications */}
-                <button
-                    className="icon-btn position-relative"
-                    onClick={() => navigate('/admin/notifications-admin')}
-                    aria-label="Notifications"
-                    style={{ color: 'var(--color-text-muted)' }}
-                >
-                    <MdNotificationsNone size={26} />
-                    {unreadCount > 0 && (
-                        <span className="notif-badge">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                    )}
-                </button>
+          
 
                 {/* Profil Dropdown */}
                 <div className="position-relative" ref={profileRef}>

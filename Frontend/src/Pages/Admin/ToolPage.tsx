@@ -15,6 +15,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { toolService } from '../../Services/ToolService';
 import type { Tool } from '../../Models/Tool';
+import { getStorageUrl } from '../../Services/api';
 
 export default function ToolPage() {
   const [tools, setTools] = useState<Tool[]>([]);
@@ -106,7 +107,7 @@ export default function ToolPage() {
       level: isNaN(Number(cleanLevel)) ? '50' : cleanLevel,
       icon: tool.icon || null
     });
-    setPreviewIcon(typeof tool.icon === 'string' ? `http://127.0.0.1:8000/storage/${tool.icon}` : null);
+    setPreviewIcon(typeof tool.icon === 'string' ? (getStorageUrl(tool.icon) ?? null) : null);
     setShowModal(true);
   };
 
@@ -287,9 +288,9 @@ export default function ToolPage() {
                         return (
                           <tr key={tool.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                             <td className="py-3 px-4">
-                              {tool.icon ? (
+                              {tool.icon && typeof tool.icon === 'string' ? (
                                 <img 
-                                  src={`http://127.0.0.1:8000/storage/${tool.icon}`} 
+                                  src={getStorageUrl(tool.icon)} 
                                   alt={tool.name} 
                                   style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '10px', backgroundColor: '#f8fafc', padding: '6px', border: '1px solid #e2e8f0' }} 
                                 />
