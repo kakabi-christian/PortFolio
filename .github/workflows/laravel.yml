@@ -125,8 +125,8 @@ jobs:
           file: ./Backend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/exchapay-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/exchapay-backend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-backend:${{ github.sha }}
 
   # # --- PARTIE 4 : DÉPLOIEMENT O2SWITCH (FTP PORT 21) ---
   # deploy-o2switch:
