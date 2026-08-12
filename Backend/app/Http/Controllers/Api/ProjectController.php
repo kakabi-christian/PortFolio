@@ -50,14 +50,14 @@ class ProjectController extends Controller
             Log::info('Fichier image détecté dans store(). Upload en cours...');
             $path = $request->file('image_url')->store('projects', 'public');
             $validatedData['image_url'] = $path;
-            Log::info('Image enregistrée avec succès sur le chemin : ' . $path);
+            Log::info('Image enregistrée avec succès sur le chemin : '.$path);
         } else {
             Log::info('Aucun fichier image trouvé dans store(). Attribution de null.');
             $validatedData['image_url'] = null;
         }
 
         $project = Project::create($validatedData);
-        Log::info('Projet créé avec succès ID: ' . $project->id);
+        Log::info('Projet créé avec succès ID: '.$project->id);
         Log::info('--- FIN STORE PROJECT ---');
 
         return response()->json([
@@ -72,7 +72,8 @@ class ProjectController extends Controller
      */
     public function show(Project $project): JsonResponse
     {
-        Log::info('ProjectController@show : Affichage du projet ID: ' . $project->id);
+        Log::info('ProjectController@show : Affichage du projet ID: '.$project->id);
+
         return response()->json([
             'status' => 'success',
             'data' => $project,
@@ -84,34 +85,34 @@ class ProjectController extends Controller
      */
     public function update(ProjectRequest $request, Project $project): JsonResponse
     {
-        Log::info('--- DEBUT UPDATE PROJECT ID: ' . $project->id . ' ---');
+        Log::info('--- DEBUT UPDATE PROJECT ID: '.$project->id.' ---');
         Log::info('Données brutes reçues (all) pour update:', $request->all());
         Log::info('Fichiers reçus (all files) pour update:', $request->allFiles());
-        Log::info('Valeur de image_url dans la requête (type/valeur) : ' . gettype($request->input('image_url')), ['val' => $request->input('image_url')]);
+        Log::info('Valeur de image_url dans la requête (type/valeur) : '.gettype($request->input('image_url')), ['val' => $request->input('image_url')]);
 
         $validatedData = $request->validated();
         Log::info('Données validées par ProjectRequest pour update:', $validatedData);
 
         // Mettre à jour ou régénérer le slug
-        if (!empty($validatedData['title']) && empty($validatedData['slug'])) {
+        if (! empty($validatedData['title']) && empty($validatedData['slug'])) {
             $validatedData['slug'] = Str::slug($validatedData['title']);
-        } elseif (!empty($validatedData['slug'])) {
+        } elseif (! empty($validatedData['slug'])) {
             $validatedData['slug'] = Str::slug($validatedData['slug']);
         }
 
         // Gestion de l'upload de la nouvelle image
         if ($request->hasFile('image_url')) {
             Log::info('Nouveau fichier image détecté lors de la mise à jour.');
-            
+
             // Supprimer l'ancienne image si elle existe
             if ($project->image_url && Storage::disk('public')->exists($project->image_url)) {
                 Storage::disk('public')->delete($project->image_url);
-                Log::info('Ancienne image supprimée du stockage : ' . $project->image_url);
+                Log::info('Ancienne image supprimée du stockage : '.$project->image_url);
             }
 
             $path = $request->file('image_url')->store('projects', 'public');
             $validatedData['image_url'] = $path;
-            Log::info('Nouvelle image stockée à : ' . $path);
+            Log::info('Nouvelle image stockée à : '.$path);
         } else {
             Log::info('Aucun nouveau fichier image envoyé. Conservation de l ancienne image en base.');
             // Conserver l'ancienne image si aucun nouveau fichier n'est envoyé
@@ -119,7 +120,7 @@ class ProjectController extends Controller
         }
 
         $project->update($validatedData);
-        Log::info('Projet mis à jour avec succès ID: ' . $project->id);
+        Log::info('Projet mis à jour avec succès ID: '.$project->id);
         Log::info('--- FIN UPDATE PROJECT ---');
 
         return response()->json([
@@ -134,12 +135,12 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project): JsonResponse
     {
-        Log::info('--- DEBUT DESTROY PROJECT ID: ' . $project->id . ' ---');
-        
+        Log::info('--- DEBUT DESTROY PROJECT ID: '.$project->id.' ---');
+
         // Supprimer l'image associée du stockage si elle existe
         if ($project->image_url && Storage::disk('public')->exists($project->image_url)) {
             Storage::disk('public')->delete($project->image_url);
-            Log::info('Image du projet supprimée du disque : ' . $project->image_url);
+            Log::info('Image du projet supprimée du disque : '.$project->image_url);
         }
 
         $project->delete();
