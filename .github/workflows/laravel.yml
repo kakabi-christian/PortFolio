@@ -128,54 +128,54 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-backend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/portfolio-backend:${{ github.sha }}
 
-  # # --- PARTIE 4 : DÉPLOIEMENT O2SWITCH (FTP PORT 21) ---
-  # deploy-o2switch:
-  #   name: "🚀 Déploiement o2switch (FTP)"
-  #   needs: [frontend-build] 
-  #   if: |
-  #     github.event_name == 'push' && 
-  #     (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-  #   runs-on: ubuntu-latest
+  # --- PARTIE 4 : DÉPLOIEMENT O2SWITCH (FTP PORT 21) ---
+  deploy-o2switch:
+    name: "🚀 Déploiement o2switch (FTP)"
+    needs: [frontend-build] 
+    if: |
+      github.event_name == 'push' && 
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
     
-  #   steps:
-  #     - name: "📦 Récupération du code source"
-  #       uses: actions/checkout@v4
+    steps:
+      - name: "📦 Récupération du code source"
+        uses: actions/checkout@v4
 
-  #     - name: "📥 Récupération du Build Frontend"
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: frontend-dist
-  #         path: ./dist-frontend
+      - name: "📥 Récupération du Build Frontend"
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./dist-frontend
 
-  #     - name: "🚀 Déploiement Backend via FTP"
-  #       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-  #       with:
-  #         server: ${{ secrets.FTP_SERVER }}
-  #         username: ${{ secrets.FTP_USERNAME }}
-  #         password: ${{ secrets.FTP_PASSWORD }}
-  #         # On déploie directement dans les sous-dossiers du compte projetExchaPay
-  #         local-dir: ./Backend/
-  #         server-dir: Backend_Code/
-  #         exclude: |
-  #           **/vendor/**
-  #           **/.env
-  #           **/.git*
+      - name: "🚀 Déploiement Backend via FTP"
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # On déploie directement dans les sous-dossiers du compte projetExchaPay
+          local-dir: ./Backend/
+          server-dir: Backend_Code/
+          exclude: |
+            **/vendor/**
+            **/.env
+            **/.git*
 
-  #     - name: "🚀 Déploiement Frontend via FTP"
-  #       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-  #       with:
-  #         server: ${{ secrets.FTP_SERVER }}
-  #         username: ${{ secrets.FTP_USERNAME }}
-  #         password: ${{ secrets.FTP_PASSWORD }}
-  #         local-dir: ./dist-frontend/
-  #         server-dir: Frontend_Public/
+      - name: "🚀 Déploiement Frontend via FTP"
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist-frontend/
+          server-dir: Frontend_Public/
 
-  #     - name: "✨ Logs de fin"
-  #       run: |
-  #         echo "✅ Déploiement FTP terminé avec succès !!!!!"
-  #         echo "🔗 URL : https://talla.cdwfs.net"
-  #         echo "🕒 Heure : $(date)"
-  #         echo "🆔 Commit : ${{ github.sha }}"
+      - name: "✨ Logs de fin"
+        run: |
+          echo "✅ Déploiement FTP terminé avec succès !!!!!"
+          echo "🔗 URL :https://kkbidevportfolio.cdwfs.net/"
+          echo "🕒 Heure : $(date)"
+          echo "🆔 Commit : ${{ github.sha }}"
 
 
 # 
