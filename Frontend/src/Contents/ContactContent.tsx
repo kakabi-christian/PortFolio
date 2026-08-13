@@ -488,7 +488,7 @@ export default function ContactContent() {
           <div className="col-md-4" data-aos="fade-up" data-aos-delay="100">
             <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <FaMapMarkerAlt className="fs-4 mb-2" style={{ color: '#ef4444' }} />
-              <p className="small mb-0 text-white">Village-Elf / Akwa, Douala — Cameroun</p>
+              <p className="small mb-0 text-white">Village-Elf,  /Douala - Cameroun</p>
             </div>
           </div>
           <div className="col-md-4" data-aos="fade-up" data-aos-delay="200">
