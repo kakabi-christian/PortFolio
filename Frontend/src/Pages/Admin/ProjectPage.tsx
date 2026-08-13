@@ -17,6 +17,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { ProjectService } from '../../Services/ProjectService';
 import type { Project } from '../../Models/Project';
+import { getStorageUrl } from '../../Services/api';
 
 export default function ProjectPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -142,7 +143,7 @@ export default function ProjectPage() {
       demo_url: project.demo_url || '',
       featured: project.featured
     });
-    setPreviewImage(typeof project.image_url === 'string' ? `http://127.0.0.1:8000/storage/${project.image_url}` : null);
+    setPreviewImage(typeof project.image_url === 'string' ? getStorageUrl(project.image_url) || null : null);
     setShowModal(true);
   };
 
@@ -311,7 +312,7 @@ export default function ProjectPage() {
                           <td className="py-3 px-4">
                             {project.image_url ? (
                               <img 
-                                src={`http://127.0.0.1:8000/storage/${project.image_url}`} 
+                                src={getStorageUrl(project.image_url as string)} 
                                 alt={project.title} 
                                 style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }} 
                               />
