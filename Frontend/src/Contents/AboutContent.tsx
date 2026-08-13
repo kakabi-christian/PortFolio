@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { FaGraduationCap, FaBriefcase, FaUserCheck, FaMapMarkerAlt, FaRocket, FaGamepad, FaPalette } from 'react-icons/fa';
 
 // Déclaration de type pour contourner l'absence de types officiels dans 'aos'
@@ -13,6 +13,16 @@ import { Line } from '@react-three/drei';
 import photoVeste from '../assets/Photo About 2.png';
 
 type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
+
+/* ============================================================
+   THEME — palette limitée à 3 couleurs (comme Home / Skills / Contact) :
+   ACCENT (bleu, couleur principale), GREEN (accent secondaire),
+   RED (uniquement pour la localisation). Le reste est neutre
+   (fond sombre + blancs/gris).
+   ============================================================ */
+const ACCENT = '#38bdf8';
+const GREEN = '#22c55e';
+const RED = '#ef4444';
 
 /* ============================================================
    HOOKS UTILITAIRES POUR LE FOND 3D
@@ -185,7 +195,6 @@ function AboutBackground3D() {
   const isMobile = useIsMobile();
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
-  const accent = '#38bdf8';
 
   const shapePositions = useMemo<[number, number, number][]>(
     () => [
@@ -203,18 +212,18 @@ function AboutBackground3D() {
     <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <SceneRig mouse={mouse} scroll={scroll}>
-          <SkillCore accent={accent} />
-          <Particles count={isMobile ? 50 : 140} accent={accent} />
+          <SkillCore accent={ACCENT} />
+          <Particles count={isMobile ? 50 : 140} accent={ACCENT} />
           {visibleShapes.map((pos, i) => (
             <FloatingShape
               key={i}
               position={pos}
               geometry={geometries[i % geometries.length]}
               speed={0.4 + i * 0.12}
-              color={i % 2 === 0 ? accent : '#22c55e'}
+              color={i % 2 === 0 ? ACCENT : GREEN}
             />
           ))}
-          {!isMobile && <ConnectionLines points={visibleShapes} accent={accent} />}
+          {!isMobile && <ConnectionLines points={visibleShapes} accent={ACCENT} />}
         </SceneRig>
       </Canvas>
     </div>
@@ -237,22 +246,22 @@ export default function AboutContent() {
       <AboutBackground3D />
 
       {/* Éléments d'arrière-plan lumineux subtils */}
-      <div className="position-absolute top-0 start-50 translate-middle-x rounded-circle" style={{ width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }}></div>
-      <div className="position-absolute bottom-0 end-0 rounded-circle" style={{ width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(34, 197, 94, 0.04) 0%, transparent 70%)', filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
+      <div className="position-absolute top-0 start-50 translate-middle-x rounded-circle" style={{ width: '600px', height: '600px', background: `radial-gradient(circle, ${ACCENT}0d 0%, transparent 70%)`, filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }}></div>
+      <div className="position-absolute bottom-0 end-0 rounded-circle" style={{ width: '500px', height: '500px', background: `radial-gradient(circle, ${GREEN}0a 0%, transparent 70%)`, filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
 
       <div className="container py-4 position-relative" style={{ zIndex: 1 }}>
         
         {/* En-tête de la page */}
         <div className="text-center mb-5" data-aos="fade-up">
-          <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginTop: '20px' }}>
-            <FaRocket style={{ color: 'var(--color-primary)' }} />
-            <span className="small text-uppercase tracking-wider fw-semibold" style={{ color: 'var(--color-primary)', letterSpacing: '2px' }}>Portfolio Officiel</span>
+          <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginTop: '20px' }}>
+            <FaRocket style={{ color: ACCENT }} />
+            <span className="small text-uppercase tracking-wider fw-semibold" style={{ color: ACCENT, letterSpacing: '2px' }}>Portfolio Officiel</span>
           </div>
-          <h2 className="fw-bold display-5 mb-2" style={{ color: 'var(--color-text-main)' }}>
-            À propos de <span style={{ color: 'var(--color-primary)', textShadow: '0 0 20px rgba(56, 189, 248, 0.3)' }}>moi</span>
+          <h2 className="fw-bold display-5 mb-2 text-white">
+            À propos de <span style={{ color: ACCENT, textShadow: `0 0 20px ${ACCENT}4d` }}>moi</span>
           </h2>
-          <div className="mx-auto mb-3" style={{ width: '80px', height: '4px', backgroundColor: 'var(--color-success)', borderRadius: '2px', boxShadow: '0 0 10px var(--color-success)' }}></div>
-          <p className="lead fs-6 mx-auto" style={{ color: 'var(--color-text-muted)', maxWidth: '700px' }}>
+          <div className="mx-auto mb-3" style={{ width: '80px', height: '4px', backgroundColor: GREEN, borderRadius: '2px', boxShadow: `0 0 10px ${GREEN}` }}></div>
+          <p className="lead fs-6 mx-auto" style={{ color: '#94a3b8', maxWidth: '700px' }}>
             Découvrez mon parcours, mes compétences full-stack, mon sens du design UI/UX et ma passion pour l'innovation.
           </p>
         </div>
@@ -266,7 +275,7 @@ export default function AboutContent() {
                 style={{ 
                   width: '100%', 
                   height: '100%', 
-                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(34, 197, 94, 0.2))',
+                  background: `linear-gradient(135deg, ${ACCENT}4d, ${GREEN}33)`,
                   zIndex: 0,
                   filter: 'blur(25px)',
                   transform: 'scale(1.08)'
@@ -276,8 +285,8 @@ export default function AboutContent() {
               <div 
                 className="p-3 rounded-4 position-relative overflow-hidden shadow-2xl" 
                 style={{ 
-                  backgroundColor: 'var(--color-surface)', 
-                  border: '1px solid var(--color-border)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
                   zIndex: 1
                 }}
@@ -292,7 +301,7 @@ export default function AboutContent() {
                     onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                   />
                   <div className="position-absolute bottom-0 start-0 w-100 p-3 text-center" style={{ background: 'linear-gradient(to top, rgba(15, 23, 42, 0.95), transparent)' }}>
-                    <span className="badge px-3 py-2 fs-6 shadow" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-bg)', fontWeight: 'bold' }}>Kakabi Christian</span>
+                    <span className="badge px-3 py-2 fs-6 shadow" style={{ backgroundColor: ACCENT, color: '#020617', fontWeight: 'bold' }}>Kakabi Christian</span>
                   </div>
                 </div>
               </div>
@@ -303,23 +312,23 @@ export default function AboutContent() {
             <div 
               className="p-4 p-lg-5 rounded-4 h-100 position-relative shadow-2xl" 
               style={{ 
-                backgroundColor: 'var(--color-surface)', 
-                border: '1px solid var(--color-border)',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
               }}
             >
-              <h3 className="fw-bold fs-4 mb-3 d-flex align-items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+              <h3 className="fw-bold fs-4 mb-3 d-flex align-items-center gap-2" style={{ color: ACCENT }}>
                 <FaUserCheck /> Profil & Vision Créative
               </h3>
-              <p className="small lh-lg mb-3" style={{ color: 'var(--color-text-main)' }}>
-                Je m'appelle <strong style={{ color: 'var(--color-primary)' }}>Kakabi Christian</strong>, étudiant en niveau 3 en informatique (Concepteur et Développeur web Full-stack) à l’<strong style={{ color: 'var(--color-success)' }}>Institut Universitaire de la Côte (IUC)</strong> de Logbessou (Douala). Au quotidien, j'exerce ma passion à travers des technologies de pointe comme <strong style={{ color: 'var(--color-primary)' }}>Laravel et React</strong>.
+              <p className="small lh-lg mb-3 text-white">
+                Je m'appelle <strong style={{ color: ACCENT }}>Kakabi Christian</strong>, étudiant en niveau 3 en informatique (Concepteur et Développeur web Full-stack) à l'<strong style={{ color: GREEN }}>Institut Universitaire de la Côte (IUC)</strong> de Logbessou (Douala). Au quotidien, j'exerce ma passion à travers des technologies de pointe comme <strong style={{ color: ACCENT }}>Laravel et React</strong>.
               </p>
-              <p className="small lh-lg mb-3" style={{ color: 'var(--color-text-muted)' }}>
-                Alliant mon expertise en <strong style={{ color: '#eab308' }}><FaPalette className="me-1" /> design UI/UX (Figma)</strong> et mon amour pour l’univers immersif des <strong style={{ color: 'var(--color-success)' }}><FaGamepad className="me-1" /> jeux vidéo</strong>, je conçois des interfaces ergonomiques, fluides et esthétiques qui placent l'expérience utilisateur au cœur de chaque projet.
+              <p className="small lh-lg mb-3" style={{ color: '#94a3b8' }}>
+                Alliant mon expertise en <strong style={{ color: ACCENT }}><FaPalette className="me-1" /> design UI/UX (Figma)</strong> et mon amour pour l'univers immersif des <strong style={{ color: GREEN }}><FaGamepad className="me-1" /> jeux vidéo</strong>, je conçois des interfaces ergonomiques, fluides et esthétiques qui placent l'expérience utilisateur au cœur de chaque projet.
               </p>
-              <div className="d-flex align-items-center gap-2 small p-3 rounded-3 mt-4 shadow-sm" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
-                <FaMapMarkerAlt style={{ color: 'var(--color-danger)' }} className="fs-5" />
-                <span style={{ color: 'var(--color-text-main)' }}>Village-Elf / Akwa, Douala — Cameroun | +237 658 78 84 48</span>
+              <div className="d-flex align-items-center gap-2 small p-3 rounded-3 mt-4 shadow-sm" style={{ backgroundColor: '#020617', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <FaMapMarkerAlt style={{ color: RED }} className="fs-5" />
+                <span className="text-white">Village-Elf / Akwa, Douala — Cameroun | +237 658 78 84 48</span>
               </div>
             </div>
           </div>
@@ -330,14 +339,14 @@ export default function AboutContent() {
           <div 
             className="p-4 p-lg-5 rounded-4 shadow-2xl" 
             style={{ 
-              backgroundColor: 'var(--color-surface)', 
-              border: '1px solid var(--color-border)',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)'
             }}
           >
             <div className="row align-items-center mb-4">
               <div className="col-lg-7">
-                <h3 className="fw-bold fs-4 m-0 d-flex align-items-center gap-2" style={{ color: 'var(--color-success)' }}>
+                <h3 className="fw-bold fs-4 m-0 d-flex align-items-center gap-2" style={{ color: GREEN }}>
                   <FaGraduationCap /> Parcours Académique & International
                 </h3>
               </div>
@@ -349,14 +358,14 @@ export default function AboutContent() {
                 <div 
                   className="p-4 rounded-3 h-100 shadow-sm" 
                   style={{ 
-                    backgroundColor: 'var(--color-bg)', 
-                    border: '1px solid var(--color-border)'
+                    backgroundColor: '#020617', 
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
                   }}
                 >
-                  <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>2023 – 2024 (Première année)</span>
-                  <h4 className="fw-bold fs-6 mb-1" style={{ color: 'var(--color-text-main)' }}>Institut Universitaire de la Côte (IUC)</h4>
-                  <p className="small mb-2 fw-semibold" style={{ color: 'var(--color-success)' }}>Logbessou, Douala — Technologie de l'Informatique (TI)</p>
-                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
+                  <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#94a3b8' }}>2023 – 2024 (Première année)</span>
+                  <h4 className="fw-bold fs-6 mb-1 text-white">Institut Universitaire de la Côte (IUC)</h4>
+                  <p className="small mb-2 fw-semibold" style={{ color: GREEN }}>Logbessou, Douala — Technologie de l'Informatique (TI)</p>
+                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
                     Réorientation réussie vers le numérique.
                   </p>
                 </div>
@@ -367,15 +376,15 @@ export default function AboutContent() {
                 <div 
                   className="p-4 rounded-3 h-100 shadow-sm" 
                   style={{ 
-                    backgroundColor: 'var(--color-bg)', 
-                    border: '1px solid var(--color-border)'
+                    backgroundColor: '#020617', 
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
                   }}
                 >
-                  <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>2024 – 2025 (Deuxième année)</span>
-                  <h4 className="fw-bold fs-6 mb-1" style={{ color: 'var(--color-text-main)' }}>IUC — Programmation et Développement d’Applications Mobiles (PAM)</h4>
-                  <p className="small mb-2 fw-semibold" style={{ color: 'var(--color-success)' }}>Logbessou, Douala</p>
-                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
-                     Obtention du <strong style={{ color: 'var(--color-text-main)' }}>Diplôme d’Études Collégiales (DEC)</strong> attestant de compétences avancées en programmation et technologies mobiles.
+                  <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#94a3b8' }}>2024 – 2025 (Deuxième année)</span>
+                  <h4 className="fw-bold fs-6 mb-1 text-white">IUC — Programmation et Développement d'Applications Mobiles (PAM)</h4>
+                  <p className="small mb-2 fw-semibold" style={{ color: GREEN }}>Logbessou, Douala</p>
+                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
+                     Obtention du <strong className="text-white">Diplôme d'Études Collégiales (DEC)</strong> attestant de compétences avancées en programmation et technologies mobiles.
                   </p>
                 </div>
               </div>
@@ -385,15 +394,15 @@ export default function AboutContent() {
                 <div 
                   className="p-4 rounded-3 shadow-sm" 
                   style={{ 
-                    backgroundColor: 'var(--color-bg)', 
-                    border: '1px solid var(--color-primary)'
+                    backgroundColor: '#020617', 
+                    border: `1px solid ${ACCENT}`
                   }}
                 >
-                  <span className="badge mb-2 px-3 py-1" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-bg)', fontWeight: 'bold' }}>2025 – 2026 (Troisième année – En cours)</span>
-                  <h4 className="fw-bold fs-6 mb-1" style={{ color: 'var(--color-text-main)' }}>IUC — Concepteur Développeur Web Full-Stack (CDWFS) & Perspective Internationale</h4>
-                  <p className="small mb-2 fw-semibold" style={{ color: 'var(--color-primary)' }}>Logbessou, Douala</p>
-                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
-                    Maîtrise quotidienne de la stack <strong style={{ color: 'var(--color-text-main)' }}>Laravel & React</strong>, conception UI/UX sur Figma.
+                  <span className="badge mb-2 px-3 py-1" style={{ backgroundColor: ACCENT, color: '#020617', fontWeight: 'bold' }}>2025 – 2026 (Troisième année – En cours)</span>
+                  <h4 className="fw-bold fs-6 mb-1 text-white">IUC — Concepteur Développeur Web Full-Stack (CDWFS) & Perspective Internationale</h4>
+                  <p className="small mb-2 fw-semibold" style={{ color: ACCENT }}>Logbessou, Douala</p>
+                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
+                    Maîtrise quotidienne de la stack <strong className="text-white">Laravel & React</strong>, conception UI/UX sur Figma.
                   </p>
                 </div>
               </div>
@@ -408,14 +417,14 @@ export default function AboutContent() {
             <div 
               className="p-4 p-lg-5 rounded-4 shadow-2xl" 
               style={{ 
-                backgroundColor: 'var(--color-surface)', 
-                border: '1px solid var(--color-border)',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)'
               }}
             >
               <div className="row align-items-center mb-4">
                 <div className="col-lg-7">
-                  <h3 className="fw-bold fs-4 m-0 d-flex align-items-center gap-2" style={{ color: '#eab308' }}>
+                  <h3 className="fw-bold fs-4 m-0 d-flex align-items-center gap-2" style={{ color: ACCENT }}>
                     <FaBriefcase /> Expérience Professionnelle
                   </h3>
                 </div>
@@ -424,20 +433,20 @@ export default function AboutContent() {
               <div 
                 className="p-4 rounded-3 shadow-sm" 
                 style={{ 
-                  backgroundColor: 'var(--color-bg)', 
-                  border: '1px solid var(--color-border)'
+                  backgroundColor: '#020617', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}
               >
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                  <h4 className="fw-bold fs-6 mb-0" style={{ color: 'var(--color-text-main)' }}>Stage Académique – LEVEGI</h4>
+                  <h4 className="fw-bold fs-6 mb-0 text-white">Stage Académique – LEVEGI</h4>
                 </div>
-                <p className="small mb-2" style={{ color: 'var(--color-text-muted)' }}><FaMapMarkerAlt className="me-1" style={{ color: 'var(--color-danger)' }} /> Akwa, Douala</p>
-                <p className="small mb-3" style={{ color: 'var(--color-text-main)' }}>
-                  Stage académique de deux mois effectué en vue de l'obtention du DEC. Supervision technique assurée par <strong style={{ color: 'var(--color-text-main)' }}>M. PAGOUEN KAWE Ragil</strong>.
+                <p className="small mb-2" style={{ color: '#94a3b8' }}><FaMapMarkerAlt className="me-1" style={{ color: RED }} /> Akwa, Douala</p>
+                <p className="small mb-3 text-white">
+                  Stage académique de deux mois effectué en vue de l'obtention du DEC. Supervision technique assurée par <strong className="text-white">M. PAGOUEN KAWE Ragil</strong>.
                 </p>
                 <div className="d-flex flex-wrap gap-2 small">
-                  <span className="badge px-3 py-1" style={{ backgroundColor: 'rgba(56, 189, 248, 0.15)', color: 'var(--color-primary)', border: '1px solid rgba(56, 189, 248, 0.3)' }}>Programmation Application Mobile (PAM)</span>
-                  <span className="badge px-3 py-1" style={{ backgroundColor: 'rgba(234, 179, 8, 0.15)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.3)' }}>UI/UX & Développement</span>
+                  <span className="badge px-3 py-1" style={{ backgroundColor: `${ACCENT}26`, color: ACCENT, border: `1px solid ${ACCENT}4d` }}>Programmation Application Mobile (PAM)</span>
+                  <span className="badge px-3 py-1" style={{ backgroundColor: `${GREEN}26`, color: GREEN, border: `1px solid ${GREEN}4d` }}>UI/UX & Développement</span>
                 </div>
               </div>
 
