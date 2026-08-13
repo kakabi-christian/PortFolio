@@ -19,10 +19,10 @@ export default function Footer() {
   return (
     <footer className="pt-4 pb-3 text-light" style={{ backgroundColor: '#1e293b', borderTop: '1px solid #334155' }}>
       <div className="container">
-        <div className="row g-4 justify-content-between align-items-center">
+        <div className="row g-4 justify-content-between align-items-center text-center text-md-start">
           
           {/* Colonne 1 : Logo */}
-          <div className="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+          <div className="col-lg-4 col-md-6 d-flex justify-content-center justify-content-md-start" data-aos="fade-up" data-aos-delay="100">
             <div className="d-flex align-items-center">
               <img 
                 src={logo} 
@@ -35,11 +35,11 @@ export default function Footer() {
           </div>
 
           {/* Colonne 2 : Contact Direct */}
-          <div className="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+          <div className="col-lg-4 col-md-6 d-flex flex-column align-items-center align-items-md-start" data-aos="fade-up" data-aos-delay="300">
             <h5 className="text-light fw-bold mb-2 fs-6" style={{ borderLeft: '3px solid #22c55e', paddingLeft: '10px' }}>
               Contact Direct
             </h5>
-            <div className="d-flex flex-column gap-2">
+            <div className="d-flex flex-column gap-2 align-items-center align-items-md-start">
               <div className="d-flex align-items-center gap-2 text-light small">
                 <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '26px', height: '26px', backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' }}>
                   <FaWhatsapp size={13} />
@@ -57,11 +57,11 @@ export default function Footer() {
           </div>
 
           {/* Colonne 3 : Réseaux (Compact) */}
-          <div className="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+          <div className="col-lg-3 col-md-6 d-flex flex-column align-items-center align-items-md-start" data-aos="fade-up" data-aos-delay="400">
             <h5 className="text-light fw-bold mb-2 fs-6" style={{ borderLeft: '3px solid #38bdf8', paddingLeft: '10px' }}>
               Réseaux
             </h5>
-            <div className="d-flex align-items-center gap-2">
+            <div className="d-flex align-items-center justify-content-center justify-content-md-start gap-2">
               <a 
                 href="https://github.com/kakabi-christian" 
                 target="_blank" 
