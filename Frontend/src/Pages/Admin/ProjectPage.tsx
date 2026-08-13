@@ -8,24 +8,25 @@ import {
   MdSave,
   MdImage,
   MdSearch,
-  MdFilterList
+  MdFilterList,
+  MdCode,
+  MdLaunch
 } from 'react-icons/md';
 //@ts-ignore
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-import { frameworkService } from '../../Services/FrameworkService';
-import type { Framework } from '../../Models/Framework';
-import { getStorageUrl } from '../../Services/api';
+import { ProjectService } from '../../Services/ProjectService';
+import type { Project } from '../../Models/Project';
 
-export default function FrameworkPage() {
-  const [frameworks, setFrameworks] = useState<Framework[]>([]);
+export default function ProjectPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Recherche et Filtrage
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filterCategory, setFilterCategory] = useState<string>('');
+  const [filterFeatured, setFilterFeatured] = useState<string>('');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -39,73 +40,117 @@ export default function FrameworkPage() {
 
   // Formulaire
   const [formData, setFormData] = useState<{
-    name: string;
-    category: string;
-    proficiency: number;
-    icon: File | string | null;
+    title: string;
+    description: string;
+    image_url: File | string | null;
+    github_url: string;
+    demo_url: string;
+    featured: boolean;
   }>({
-    name: '',
-    category: 'Frontend', // Valeur par défaut correspondant à l'Enum
-    proficiency: 50,
-    icon: null
+    title: '',
+    description: '',
+    image_url: null,
+    github_url: '',
+    demo_url: '',
+    featured: false
   });
 
-  const [previewIcon, setPreviewIcon] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
   }, []);
 
-  const fetchFrameworks = async (page = 1) => {
+  const fetchProjects = async (page: number = 1) => {
     try {
       setLoading(true);
-      const data = await frameworkService.getAll(page, searchTerm, filterCategory);
-      setFrameworks(data.data);
-      setCurrentPage(data.current_page);
-      setLastPage(data.last_page);
+      const data = await ProjectService.getAll(page);
+
+      // Réponse Laravel typique : { status, data: { current_page, data: [...], last_page, ... } }
+      // Mais on reste défensif au cas où le backend renvoie directement un tableau,
+      // ou directement le paginator sans le wrapper { status, data }.
+      let list: Project[] = [];
+      let paginationSource: any = null;
+
+      if (Array.isArray(data)) {
+        // Cas: réponse = tableau brut de projets
+        list = data;
+      } else if (Array.isArray(data?.data)) {
+        // Cas: réponse = { data: [...] } (déjà le tableau, pas de wrapper paginator)
+        list = data.data;
+        paginationSource = data;
+      } else if (Array.isArray(data?.data?.data)) {
+        // Cas standard Laravel: { status, data: { current_page, data: [...], last_page, ... } }
+        list = data.data.data;
+        paginationSource = data.data;
+      }
+
+      setProjects(list);
+
+      if (paginationSource && typeof paginationSource.last_page === 'number') {
+        setLastPage(paginationSource.last_page);
+        setCurrentPage(paginationSource.current_page || page);
+      } else {
+        setLastPage(1);
+      }
     } catch (err) {
-      console.error("Erreur lors de la récupération des frameworks", err);
-      setErrorMsg("Impossible de charger les frameworks.");
+      console.error("Erreur lors de la récupération des projets", err);
+      setErrorMsg("Impossible de charger les projets.");
+      setProjects([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Debounce pour la recherche
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchFrameworks(currentPage);
-    }, 400);
+    fetchProjects(currentPage);
+  }, [currentPage]);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [currentPage, searchTerm, filterCategory]);
+  // Filtrage sécurisé (on s'assure que projects est un tableau)
+  const projectsList = Array.isArray(projects) ? projects : [];
+  const filteredProjects = projectsList.filter(project => {
+    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          project.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFeatured = filterFeatured === '' ? true : 
+                            filterFeatured === 'true' ? project.featured : !project.featured;
+    return matchesSearch && matchesFeatured;
+  });
 
   const handleOpenAddModal = () => {
     setIsEditing(false);
     setCurrentId(null);
-    setFormData({ name: '', category: 'Frontend', proficiency: 50, icon: null });
-    setPreviewIcon(null);
+    setFormData({
+      title: '',
+      description: '',
+      image_url: null,
+      github_url: '',
+      demo_url: '',
+      featured: false
+    });
+    setPreviewImage(null);
     setShowModal(true);
   };
 
-  const handleOpenEditModal = (framework: Framework) => {
+  const handleOpenEditModal = (project: Project) => {
     setIsEditing(true);
-    setCurrentId(framework.id || null);
+    setCurrentId(project.id || null);
     setFormData({
-      name: framework.name,
-      category: framework.category,
-      proficiency: framework.proficiency,
-      icon: framework.icon || null
+      title: project.title,
+      description: project.description,
+      image_url: project.image_url || null,
+      github_url: project.github_url || '',
+      demo_url: project.demo_url || '',
+      featured: project.featured
     });
-    setPreviewIcon(typeof framework.icon === 'string' ? (getStorageUrl(framework.icon) ?? null) : null);
+    setPreviewImage(typeof project.image_url === 'string' ? `http://127.0.0.1:8000/storage/${project.image_url}` : null);
     setShowModal(true);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData({ ...formData, icon: file });
-      setPreviewIcon(URL.createObjectURL(file));
+      setFormData({ ...formData, image_url: file });
+      setPreviewImage(URL.createObjectURL(file));
     }
   };
 
@@ -115,23 +160,28 @@ export default function FrameworkPage() {
     setSuccessMsg(null);
 
     try {
-      const payload: Framework = {
-        name: formData.name,
-        category: formData.category,
-        proficiency: Number(formData.proficiency),
-        icon: formData.icon instanceof File ? formData.icon : undefined
-      };
+      const dataToSend = new FormData();
+      dataToSend.append('title', formData.title);
+      dataToSend.append('description', formData.description);
+      dataToSend.append('featured', formData.featured ? '1' : '0');
+      dataToSend.append('github_url', formData.github_url || '');
+      dataToSend.append('demo_url', formData.demo_url || '');
+      
+      if (formData.image_url instanceof File) {
+        dataToSend.append('image_url', formData.image_url);
+      }
 
       if (isEditing && currentId) {
-        await frameworkService.update(currentId, payload);
-        setSuccessMsg("Framework mis à jour avec succès !");
+        dataToSend.append('_method', 'PUT');
+        await ProjectService.update(currentId, dataToSend as any);
+        setSuccessMsg("Projet mis à jour avec succès !");
       } else {
-        await frameworkService.create(payload);
-        setSuccessMsg("Framework créé avec succès !");
+        await ProjectService.create(dataToSend as any);
+        setSuccessMsg("Projet créé avec succès !");
       }
 
       setShowModal(false);
-      fetchFrameworks(currentPage);
+      fetchProjects(currentPage);
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: any) {
       console.error(err);
@@ -142,10 +192,10 @@ export default function FrameworkPage() {
   const handleDeleteConfirm = async () => {
     if (!currentId) return;
     try {
-      await frameworkService.delete(currentId);
-      setSuccessMsg("Framework supprimé avec succès !");
+      await ProjectService.delete(currentId);
+      setSuccessMsg("Projet supprimé avec succès !");
       setShowDeleteModal(false);
-      fetchFrameworks(currentPage);
+      fetchProjects(currentPage);
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err) {
       setErrorMsg("Erreur lors de la suppression.");
@@ -164,10 +214,10 @@ export default function FrameworkPage() {
                 <div className="p-2 rounded-3 me-3 shadow-sm d-flex align-items-center justify-content-center" style={{ backgroundColor: '#eff6ff', color: '#2563eb' }}>
                   <MdLayers size={28} />
                 </div>
-                Gestion des Frameworks
+                Gestion des Projets
               </h2>
               <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
-                Organisez et pilotez l'ensemble de vos technologies et compétences techniques avec élégance.
+                Organisez et pilotez l'ensemble de vos réalisations et projets web/mobile.
               </p>
             </div>
             <button 
@@ -175,7 +225,7 @@ export default function FrameworkPage() {
               onClick={handleOpenAddModal}
               style={{ backgroundColor: '#2563eb', borderRadius: '12px', border: 'none', transition: 'transform 0.2s' }}
             >
-              <MdAdd size={22} className="me-2" /> Nouveau Framework
+              <MdAdd size={22} className="me-2" /> Nouveau Projet
             </button>
           </div>
 
@@ -189,12 +239,9 @@ export default function FrameworkPage() {
                 <input 
                   type="text" 
                   className="form-control shadow-none border-0 py-2" 
-                  placeholder="Rechercher par nom..." 
+                  placeholder="Rechercher par titre ou description..." 
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   style={{ backgroundColor: '#f8fafc', color: '#1e293b', borderRadius: '0 12px 12px 0', fontSize: '0.95rem' }}
                 />
               </div>
@@ -205,17 +252,13 @@ export default function FrameworkPage() {
                 </span>
                 <select 
                   className="form-select shadow-none border-0 py-2" 
-                  value={filterCategory}
-                  onChange={(e) => {
-                    setFilterCategory(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  value={filterFeatured}
+                  onChange={(e) => setFilterFeatured(e.target.value)}
                   style={{ backgroundColor: '#f8fafc', color: '#1e293b', borderRadius: '0 12px 12px 0', fontSize: '0.95rem', cursor: 'pointer' }}
                 >
-                  <option value="">Toutes les catégories</option>
-                  <option value="Frontend">Frontend</option>
-                  <option value="Backend">Backend</option>
-                  <option value="Mobile">Mobile</option>
+                  <option value="">Tous les projets</option>
+                  <option value="true">Mis en avant (Featured)</option>
+                  <option value="false">Standards</option>
                 </select>
               </div>
             </div>
@@ -235,70 +278,96 @@ export default function FrameworkPage() {
             </div>
           )}
 
-          {/* Tableau des Frameworks */}
+          {/* Tableau des Projets */}
           <div className="card border-0 shadow-sm overflow-hidden" style={{ backgroundColor: '#ffffff', borderRadius: '20px', border: '1px solid #f1f5f9' }} data-aos="fade-up" data-aos-delay="200">
             <div className="card-body p-0">
               <div className="table-responsive">
                 <table className="table align-middle mb-0" style={{ color: '#1e293b' }}>
                   <thead style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #f1f5f9' }}>
                     <tr>
-                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Icône</th>
-                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Nom</th>
-                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Catégorie</th>
-                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Maîtrise (%)</th>
+                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Image</th>
+                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Titre</th>
+                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Description</th>
+                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Liens</th>
+                      <th className="py-3 px-4 text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Statut</th>
                       <th className="py-3 px-4 text-end text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted">
+                        <td colSpan={6} className="text-center py-5 text-muted">
                           <div className="spinner-border text-primary me-2" role="status" style={{ width: '1.5rem', height: '1.5rem' }}></div>
                           Chargement en cours...
                         </td>
                       </tr>
-                    ) : frameworks.length === 0 ? (
+                    ) : filteredProjects.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted">Aucun framework trouvé.</td>
+                        <td colSpan={6} className="text-center py-5 text-muted">Aucun projet trouvé.</td>
                       </tr>
                     ) : (
-                      frameworks.map((fw) => (
-                        <tr key={fw.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.2s' }}>
+                      filteredProjects.map((project) => (
+                        <tr key={project.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.2s' }}>
                           <td className="py-3 px-4">
-                            {fw.icon && typeof fw.icon === 'string' ? (
+                            {project.image_url ? (
                               <img 
-                                src={getStorageUrl(fw.icon)} 
-                                alt={fw.name} 
-                                style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '10px', backgroundColor: '#f8fafc', padding: '6px', border: '1px solid #e2e8f0' }} 
+                                src={`http://127.0.0.1:8000/storage/${project.image_url}`} 
+                                alt={project.title} 
+                                style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }} 
                               />
                             ) : (
-                              <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ width: '48px', height: '48px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <MdImage size={20} className="text-muted" />
                               </div>
                             )}
                           </td>
-                          <td className="py-3 px-4 fw-bold text-dark">{fw.name}</td>
-                          <td className="py-3 px-4">
-                            <span className="badge px-3 py-2 fw-semibold" style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', borderRadius: '8px' }}>
-                              {fw.category}
-                            </span>
+                          <td className="py-3 px-4 fw-bold text-dark">{project.title}</td>
+                          <td className="py-3 px-4 text-muted" style={{ maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {project.description}
                           </td>
-                          <td className="py-3 px-4" style={{ width: '220px' }}>
-                            <div className="d-flex align-items-center justify-content-between mb-1" style={{ fontSize: '0.85rem' }}>
-                              <span className="fw-bold text-secondary">{fw.proficiency}%</span>
+                          <td className="py-3 px-4">
+                            <div className="d-flex gap-2">
+                              {project.github_url && (
+                                <a 
+                                  href={project.github_url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="btn btn-sm shadow-sm"
+                                  style={{ backgroundColor: '#f1f5f9', color: '#0f172a', border: 'none', borderRadius: '8px', padding: '6px 8px' }}
+                                  title="Voir le code GitHub"
+                                >
+                                  <MdCode size={16} />
+                                </a>
+                              )}
+                              {project.demo_url && (
+                                <a 
+                                  href={project.demo_url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="btn btn-sm shadow-sm"
+                                  style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '8px', padding: '6px 8px' }}
+                                  title="Voir la démo en direct"
+                                >
+                                  <MdLaunch size={16} />
+                                </a>
+                              )}
                             </div>
-                            <div className="progress shadow-none" style={{ height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>
-                              <div 
-                                className="progress-bar" 
-                                role="progressbar" 
-                                style={{ width: `${fw.proficiency}%`, backgroundColor: '#2563eb', borderRadius: '4px' }} 
-                              />
-                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            {project.featured ? (
+                              <span className="badge px-3 py-2 fw-semibold" style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', borderRadius: '8px' }}>
+                                Mis en avant
+                              </span>
+                            ) : (
+                              <span className="badge px-3 py-2 fw-semibold" style={{ backgroundColor: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                                Standard
+                              </span>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-end">
                             <button 
                               className="btn btn-sm me-2 shadow-sm" 
-                              onClick={() => handleOpenEditModal(fw)}
+                              onClick={() => handleOpenEditModal(project)}
                               style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '8px', padding: '8px 10px' }}
                               title="Modifier"
                             >
@@ -306,7 +375,7 @@ export default function FrameworkPage() {
                             </button>
                             <button 
                               className="btn btn-sm shadow-sm" 
-                              onClick={() => { setCurrentId(fw.id || null); setShowDeleteModal(true); }}
+                              onClick={() => { setCurrentId(project.id || null); setShowDeleteModal(true); }}
                               style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '8px', padding: '8px 10px' }}
                               title="Supprimer"
                             >
@@ -321,28 +390,30 @@ export default function FrameworkPage() {
               </div>
             </div>
 
-            {/* Pagination */}
-            <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center py-3 px-4" style={{ borderTop: '1px solid #f1f5f9' }}>
-              <span className="text-muted" style={{ fontSize: '0.85rem' }}>Page <strong>{currentPage}</strong> sur <strong>{lastPage}</strong></span>
-              <div className="d-flex gap-2">
-                <button 
-                  className="btn btn-sm px-3 fw-bold shadow-sm"
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  style={{ backgroundColor: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0', borderRadius: '8px' }}
-                >
-                  Précédent
-                </button>
-                <button 
-                  className="btn btn-sm px-3 fw-bold shadow-sm"
-                  disabled={currentPage >= lastPage}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  style={{ backgroundColor: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0', borderRadius: '8px' }}
-                >
-                  Suivant
-                </button>
+            {/* Pagination si applicable */}
+            {lastPage > 1 && (
+              <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center py-3 px-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+                <span className="text-muted" style={{ fontSize: '0.85rem' }}>Page <strong>{currentPage}</strong> sur <strong>{lastPage}</strong></span>
+                <div className="d-flex gap-2">
+                  <button 
+                    className="btn btn-sm px-3 fw-bold shadow-sm"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    style={{ backgroundColor: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+                  >
+                    Précédent
+                  </button>
+                  <button 
+                    className="btn btn-sm px-3 fw-bold shadow-sm"
+                    disabled={currentPage >= lastPage}
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    style={{ backgroundColor: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+                  >
+                    Suivant
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
         </div>
@@ -351,56 +422,80 @@ export default function FrameworkPage() {
       {/* MODAL AJOUT / MODIFICATION */}
       {showModal && (
         <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(6px)', zIndex: 1050 }}>
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-dialog-centered modal-lg">
             <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '24px', backgroundColor: '#ffffff', color: '#1e293b' }} data-aos="zoom-in">
               <div className="modal-header border-0 pb-0 pt-4 px-4">
-                <h5 className="modal-title fw-extrabold text-dark">{isEditing ? "Modifier le Framework" : "Ajouter un Framework"}</h5>
+                <h5 className="modal-title fw-extrabold text-dark">{isEditing ? "Modifier le Projet" : "Ajouter un Projet"}</h5>
                 <button type="button" className="btn-close shadow-none" onClick={() => setShowModal(false)} />
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body p-4">
                   
                   <div className="mb-3">
-                    <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Nom du Framework</label>
+                    <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Titre du Projet</label>
                     <input 
                       type="text" 
                       className="form-control shadow-none" 
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       style={{ backgroundColor: '#f8fafc', color: '#1e293b', borderRadius: '12px', padding: '12px', border: '1px solid #e2e8f0' }}
                       required 
                     />
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Catégorie</label>
-                    <select 
-                      className="form-select shadow-none" 
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      style={{ backgroundColor: '#f8fafc', color: '#1e293b', borderRadius: '12px', padding: '12px', border: '1px solid #e2e8f0', cursor: 'pointer' }}
+                    <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Description</label>
+                    <textarea 
+                      className="form-control shadow-none" 
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      style={{ backgroundColor: '#f8fafc', color: '#1e293b', borderRadius: '12px', padding: '12px', border: '1px solid #e2e8f0' }}
                       required
-                    >
-                      <option value="Frontend">Frontend</option>
-                      <option value="Backend">Backend</option>
-                      <option value="Mobile">Mobile</option>
-                    </select>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Maîtrise ({formData.proficiency}%)</label>
-                    <input 
-                      type="range" 
-                      className="form-range custom-range" 
-                      min="0" 
-                      max="100" 
-                      value={formData.proficiency}
-                      onChange={(e) => setFormData({ ...formData, proficiency: Number(e.target.value) })}
                     />
                   </div>
 
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Lien GitHub</label>
+                      <input 
+                        type="url" 
+                        className="form-control shadow-none" 
+                        placeholder="https://github.com/..."
+                        value={formData.github_url}
+                        onChange={(e) => setFormData({ ...formData, github_url: e.target.value })}
+                        style={{ backgroundColor: '#f8fafc', color: '#1e293b', borderRadius: '12px', padding: '12px', border: '1px solid #e2e8f0' }}
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Lien Démo / Live</label>
+                      <input 
+                        type="url" 
+                        className="form-control shadow-none" 
+                        placeholder="https://..."
+                        value={formData.demo_url}
+                        onChange={(e) => setFormData({ ...formData, demo_url: e.target.value })}
+                        style={{ backgroundColor: '#f8fafc', color: '#1e293b', borderRadius: '12px', padding: '12px', border: '1px solid #e2e8f0' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-3 form-check">
+                    <input 
+                      type="checkbox" 
+                      className="form-check-input shadow-none" 
+                      id="featuredCheck"
+                      checked={formData.featured}
+                      onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      style={{ cursor: 'pointer', width: '20px', height: '20px', borderRadius: '6px' }}
+                    />
+                    <label className="form-check-label fw-semibold ms-2 text-dark" htmlFor="featuredCheck" style={{ cursor: 'pointer' }}>
+                      Mettre ce projet en avant (Featured)
+                    </label>
+                  </div>
+
                   <div className="mb-3">
-                    <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Icône (Image)</label>
+                    <label className="form-label fw-bold text-uppercase text-secondary font-monospace" style={{ fontSize: '0.75rem' }}>Image de couverture</label>
                     <input 
                       type="file" 
                       className="form-control shadow-none" 
@@ -408,9 +503,9 @@ export default function FrameworkPage() {
                       onChange={handleFileChange}
                       style={{ backgroundColor: '#f8fafc', color: '#1e293b', borderRadius: '12px', padding: '12px', border: '1px solid #e2e8f0' }}
                     />
-                    {previewIcon && (
+                    {previewImage && (
                       <div className="mt-3 text-center">
-                        <img src={previewIcon} alt="Aperçu" style={{ width: '60px', height: '60px', objectFit: 'contain', borderRadius: '10px', backgroundColor: '#f8fafc', padding: '6px', border: '1px solid #e2e8f0' }} />
+                        <img src={previewImage} alt="Aperçu" style={{ width: '100px', height: '70px', objectFit: 'cover', borderRadius: '10px', backgroundColor: '#f8fafc', padding: '4px', border: '1px solid #e2e8f0' }} />
                       </div>
                     )}
                   </div>
@@ -449,7 +544,7 @@ export default function FrameworkPage() {
                   <MdDelete size={36} />
                 </div>
                 <h5 className="fw-bold mb-2 text-dark">Confirmer la suppression</h5>
-                <p className="text-muted" style={{ fontSize: '0.9rem' }}>Voulez-vous vraiment supprimer ce framework ? Cette action est irréversible.</p>
+                <p className="text-muted" style={{ fontSize: '0.9rem' }}>Voulez-vous vraiment supprimer ce projet ? Cette action est irréversible.</p>
                 <div className="d-flex gap-2 mt-4">
                   <button 
                     type="button" 
