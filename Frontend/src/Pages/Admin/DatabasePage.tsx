@@ -289,17 +289,17 @@ export default function DatabasePage() {
                           <tr key={db.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.2s' }}>
                             <td className="py-3 px-4">
                               {db.icon ? (
-                                <img 
-                                  src={`http://127.0.0.1:8000/storage/${db.icon}`} 
-                                  alt={db.name} 
-                                  style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '10px', backgroundColor: '#f8fafc', padding: '6px', border: '1px solid #e2e8f0' }} 
-                                />
+                                  <img 
+                                      src={getStorageUrl(db.icon)} 
+                                      alt={db.name} 
+                                      style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '10px', backgroundColor: '#f8fafc', padding: '6px', border: '1px solid #e2e8f0' }} 
+                                  />
                               ) : (
-                                <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <MdImage size={20} className="text-muted" />
-                                </div>
+                                  <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <MdImage size={20} className="text-muted" />
+                                  </div>
                               )}
-                            </td>
+                          </td>
                             <td className="py-3 px-4 fw-bold text-dark">{db.name}</td>
                             <td className="py-3 px-4">
                               <span className="badge px-3 py-2 fw-semibold" style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe', borderRadius: '8px' }}>
