@@ -77,7 +77,7 @@ function CyborgHeadHUD({
 
   return (
     <group ref={groupRef} position={position}>
-      {/* Structure crânienne / Casque Cyborg abstrait (Icosaèdre étiré / Capsule) */}
+      {/* Structure crânienne / Casque Cyborg abstrait */}
       <mesh position={[0, 0.2, 0]}>
         <icosahedronGeometry args={[1.1, 1]} />
         <meshBasicMaterial color={color} wireframe transparent opacity={0.35} />
@@ -103,8 +103,6 @@ function CyborgHeadHUD({
     </group>
   );
 }
-
-
 
 function Particles({ count, accent }: { count: number; accent: string }) {
   const positions = useMemo(() => {
@@ -174,10 +172,10 @@ function LoginBackground3D() {
     >
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <SceneRig mouse={mouse} scroll={scroll}>
-          {/* Cyborgs HUD sur les côtés uniquement — plus de noyau central derrière la carte */}
-          <CyborgHeadHUD position={[-4, 1.5, -4]} rotationSpeed={-0.3} color="#22c55e" />
-          <CyborgHeadHUD position={[4, -1.5, -4]} rotationSpeed={0.5} color="#60a5fa" />
-          <Particles count={isMobile ? 50 : 130} accent={accent} />
+          {/* Adaptation des positions des cyborgs pour ne pas surcharger l'affichage mobile */}
+          <CyborgHeadHUD position={isMobile ? [-2.2, 1.2, -4] : [-4, 1.5, -4]} rotationSpeed={-0.3} color="#22c55e" />
+          <CyborgHeadHUD position={isMobile ? [2.2, -1.2, -4] : [4, -1.5, -4]} rotationSpeed={0.5} color="#60a5fa" />
+          <Particles count={isMobile ? 40 : 130} accent={accent} />
         </SceneRig>
       </Canvas>
     </div>
@@ -244,21 +242,20 @@ export default function LoginContent() {
   };
 
   return (
-    <div className="login-page-wrapper d-flex align-items-center justify-content-center position-relative overflow-hidden" 
+    <div className="login-page-wrapper d-flex align-items-center justify-content-center position-relative overflow-hidden px-3 py-4" 
          style={{ minHeight: '100vh', backgroundColor: '#020617' }}>
       
       {/* Fond 3D Interactif — Visages Cyborgs & Particules */}
       <LoginBackground3D />
 
-      {/* Éléments de lueur d'ambiance */}
-      <div className="position-absolute top-50 start-50 translate-middle rounded-circle" style={{ width: '450px', height: '450px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%)', filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
+      {/* Éléments de lueur d'ambiance centrés */}
+      <div className="position-absolute top-50 start-50 translate-middle rounded-circle" style={{ width: 'min(450px, 90vw)', height: 'min(450px, 90vw)', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%)', filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
 
-      {/* Carte de connexion compacte (largeur et longueur réduites) */}
-      <div className="login-card p-3 p-md-4 shadow-2xl rounded-4 border-0 position-relative" 
+      {/* Carte de connexion responsive et centrée */}
+      <div className="login-card p-3 p-md-4 shadow-2xl rounded-4 border-0 position-relative w-100 mx-auto" 
            data-aos="zoom-in-up"
            style={{ 
              maxWidth: '380px', 
-             width: '85%', 
              backgroundColor: 'rgba(255, 255, 255, 0.05)',
              border: '1px solid rgba(255, 255, 255, 0.15)',
              zIndex: 1,
@@ -311,7 +308,6 @@ export default function LoginContent() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 name="email" 
-                placeholder="votre@email.com" 
                 value={formData.email} 
                 onChange={handleChange} 
                 required 
@@ -344,7 +340,6 @@ export default function LoginContent() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 name="password" 
-                placeholder="••••••••" 
                 value={formData.password} 
                 onChange={handleChange} 
                 required 
