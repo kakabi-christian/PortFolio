@@ -1,65 +1,269 @@
-import { Link } from 'react-router-dom';
-import logo from '../assets/Logo-app.png'; 
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import logo from '../assets/Logo-app.png';
+
+const ACCENT = '#38bdf8';
+
+const NAV_LINKS = [
+  { to: '/', label: 'Home' },
+  { to: '/about', label: 'About' },
+  { to: '/skills', label: 'Skills' },
+  { to: '/project', label: 'Project' },
+  { to: '/contact', label: 'Contact' },
+];
 
 export default function Header() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+
+  const closeMenu = () => setIsOpen(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <nav className="navbar navbar-expand-lg fixed-top shadow-sm" style={{ backgroundColor: '#1e293b' }}>
-      <div className="container">
-        {/* Remplacement du texte par le Logo */}
-        <Link className="navbar-brand d-flex align-items-center p-0" to="/">
-          <img 
-            src={logo} 
-            alt="Kakabi Portfolio Logo" 
-            style={{ height: '70px', width: '250px', marginLeft:'-40%' }} // Ajuste la hauteur selon ton logo
-            className="img-fluid"
-            
-          />
-          <span style={{ color:'white', fontSize:'15px' }}> PORTFOLIO</span>
-        </Link>
+    <>
+      <style>{`
+        .app-header {
+          transition: background-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+          background-color: rgba(30, 41, 59, 0.75);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+        }
+        .app-header.is-scrolled {
+          background-color: rgba(15, 23, 42, 0.95);
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+        }
 
-        {/* Bouton Hamburger pour mobile */}
-        <button 
-          className="navbar-toggler border-0" 
-          type="button" 
-          data-bs-toggle="collapse" 
-          data-bs-target="#navbarNav" 
-          aria-controls="navbarNav" 
-          aria-expanded="false" 
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon" style={{ filter: 'invert(1)' }}></span>
-        </button>
+        .app-header .navbar-brand {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 0;
+          min-width: 0;
+        }
 
-        {/* Liens de navigation alignés */}
-        <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
-          <ul className="navbar-nav align-items-lg-center gap-2">
-            <li className="nav-item">
-              <Link className="nav-link text-light fw-medium" to="/">Home</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link text-light fw-medium" to="/about">About</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link text-light fw-medium" to="/skills">Skills</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link text-light fw-medium" to="/project">Project</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link text-light fw-medium" to="/contact">Contact</Link>
-            </li>
-            <li className="nav-item ms-lg-3">
-              <Link 
-                className="btn btn-sm px-3 py-2 fw-semibold text-dark" 
-                to="/login" 
-                style={{ backgroundColor: '#38bdf8', transition: '0.3s' }}
-              >
-                Login
-              </Link>
-            </li>
-          </ul>
+        .app-header .brand-logo {
+          height: clamp(40px, 9vw, 70px);
+          width: auto;
+          object-fit: contain;
+          flex-shrink: 0;
+          transition: transform 0.3s ease, filter 0.3s ease;
+        }
+        .app-header .navbar-brand:hover .brand-logo {
+          transform: scale(1.06);
+          filter: drop-shadow(0 0 10px ${ACCENT}88);
+        }
+
+        .app-header .brand-text {
+          color: #ffffff;
+          font-size: clamp(11px, 2.2vw, 15px);
+          white-space: nowrap;
+          transition: color 0.3s ease;
+        }
+        .app-header .navbar-brand:hover .brand-text {
+          color: ${ACCENT};
+        }
+
+        @media (min-width: 992px) {
+          .app-header .brand-logo {
+            margin-left: -25%;
+          }
+        }
+        @media (max-width: 360px) {
+          .app-header .brand-text {
+            display: none;
+          }
+        }
+
+        /* Liens de nav : soulignement animé depuis le centre + couleur accent */
+        .app-header .nav-link {
+          position: relative;
+          transition: color 0.25s ease;
+        }
+        .app-header .nav-link::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          bottom: 2px;
+          width: 0;
+          height: 2px;
+          background: ${ACCENT};
+          transition: width 0.25s ease, left 0.25s ease;
+          border-radius: 2px;
+        }
+        .app-header .nav-link:hover {
+          color: ${ACCENT} !important;
+        }
+        .app-header .nav-link:hover::after {
+          width: 70%;
+          left: 15%;
+        }
+        .app-header .nav-link.is-active {
+          color: ${ACCENT} !important;
+        }
+        .app-header .nav-link.is-active::after {
+          width: 70%;
+          left: 15%;
+        }
+
+        /* Bouton Login : scale + halo pulsé au survol */
+        .app-header .login-btn {
+          transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+        }
+        .app-header .login-btn:hover {
+          transform: translateY(-2px) scale(1.04);
+          box-shadow: 0 0 18px ${ACCENT}99;
+        }
+
+        /* Hamburger animé : visible uniquement sur mobile/tablette (< 992px) */
+        .app-header .burger {
+          width: 26px;
+          height: 20px;
+          position: relative;
+          background: none;
+          border: none;
+          padding: 4px;
+          cursor: pointer;
+          display: none; /* Masqué par défaut sur desktop */
+        }
+        .app-header .burger:focus {
+          outline: none;
+          box-shadow: none;
+        }
+        .app-header .burger span {
+          position: absolute;
+          left: 4px;
+          right: 4px;
+          height: 2px;
+          background: #ffffff;
+          border-radius: 2px;
+          transition: transform 0.3s ease, opacity 0.2s ease, top 0.3s ease;
+        }
+        .app-header .burger span:nth-child(1) { top: 4px; }
+        .app-header .burger span:nth-child(2) { top: 11px; }
+        .app-header .burger span:nth-child(3) { top: 18px; }
+
+        .app-header .burger.is-open span:nth-child(1) {
+          top: 11px;
+          transform: rotate(45deg);
+        }
+        .app-header .burger.is-open span:nth-child(2) {
+          opacity: 0;
+        }
+        .app-header .burger.is-open span:nth-child(3) {
+          top: 11px;
+          transform: rotate(-45deg);
+        }
+
+        /* Menu mobile : fondu + glissement */
+        .app-header .navbar-collapse {
+          display: none;
+        }
+        .app-header .navbar-collapse.is-open {
+          display: block;
+          animation: navFadeIn 0.28s ease forwards;
+        }
+        @keyframes navFadeIn {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (min-width: 992px) {
+          .app-header .navbar-collapse {
+            display: flex !important;
+            animation: none !important;
+          }
+        }
+
+        @media (max-width: 991.98px) {
+          .app-header .burger {
+            display: block; /* Affiché uniquement en mode responsive */
+          }
+          .app-header .navbar-collapse {
+            padding: 1rem 0 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            margin-top: 0.75rem;
+          }
+          .app-header .nav-link {
+            padding: 0.6rem 0.25rem;
+          }
+          .app-header .nav-link::after {
+            bottom: -1px;
+          }
+          .app-header .nav-item + .nav-item {
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+          }
+          .app-header .login-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-top: 0.75rem;
+          }
+        }
+      `}</style>
+
+      <nav className={`app-header navbar navbar-expand-lg fixed-top shadow-sm ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="container px-3">
+          <Link className="navbar-brand" to="/" onClick={closeMenu}>
+            <img
+              src={logo}
+              alt="Kakabi Portfolio Logo"
+              className="brand-logo img-fluid"
+            />
+            <span className="brand-text">PORTFOLIO</span>
+          </Link>
+
+          {/* Hamburger affiché uniquement en mode responsive */}
+          <button
+            className={`burger ${isOpen ? 'is-open' : ''}`}
+            type="button"
+            onClick={() => setIsOpen((prev) => !prev)}
+            aria-controls="navbarNav"
+            aria-expanded={isOpen}
+            aria-label="Toggle navigation"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          {/* Liens de navigation */}
+          <div className={`navbar-collapse justify-content-end ${isOpen ? 'is-open' : ''}`} id="navbarNav">
+            <ul className="navbar-nav align-items-lg-center gap-lg-2">
+              {NAV_LINKS.map((link) => {
+                const isActive = location.pathname === link.to;
+                return (
+                  <li className="nav-item" key={link.to}>
+                    <Link
+                      className={`nav-link text-light fw-medium ${isActive ? 'is-active' : ''}`}
+                      to={link.to}
+                      onClick={closeMenu}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+              <li className="nav-item ms-lg-3">
+                <Link
+                  className="login-btn btn btn-sm px-3 py-2 fw-semibold text-dark"
+                  to="/login"
+                  onClick={closeMenu}
+                  style={{ backgroundColor: ACCENT }}
+                >
+                  Login
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }
