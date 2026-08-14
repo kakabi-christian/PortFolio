@@ -47,7 +47,8 @@ function useMousePosition() {
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
   return pos;
-}
+}  
+// 
 
 function useScrollDepth() {
   const depth = useRef(0);
