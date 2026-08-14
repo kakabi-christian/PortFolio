@@ -5,10 +5,10 @@ import logo from '../assets/Logo-app.png';
 const ACCENT = '#38bdf8';
 
 const NAV_LINKS = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
-  { to: '/skills', label: 'Skills' },
-  { to: '/project', label: 'Project' },
+  { to: '/', label: 'Accueil' },
+  { to: '/about', label: 'A propos' },
+  { to: '/skills', label: 'Compétences' },
+  { to: '/project', label: 'Projets' },
   { to: '/contact', label: 'Contact' },
 ];
 
@@ -257,7 +257,7 @@ export default function Header() {
                   onClick={closeMenu}
                   style={{ backgroundColor: ACCENT }}
                 >
-                  Login
+                  Connexion
                 </Link>
               </li>
             </ul>
