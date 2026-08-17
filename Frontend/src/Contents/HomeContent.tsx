@@ -287,7 +287,7 @@ export default function HomeContent() {
   const roles = [
     "Étudiant en Informatique",
     "Développeur Full-Stack",
-    "Software Engineer"
+    // "Software Engineer"
   ];
 
   useEffect(() => {
