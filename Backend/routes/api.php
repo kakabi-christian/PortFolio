@@ -37,7 +37,6 @@ Route::post('/contact', [ContactController::class, 'store']);
 
 Route::post('/translate', [TranslationController::class, 'store']);
 
-
 // Routes protégées par Sanctum
 Route::middleware('auth:sanctum')->group(function () {
 
