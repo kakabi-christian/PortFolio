@@ -1,5 +1,7 @@
 /* theme.css */
-:root {
+
+/* Mode Sombre (Par défaut) */
+:root, [data-theme='dark'] {
     /* 1. Primary - Bleu Tech / Accent principal */
     --color-primary: #38bdf8;
     --color-primary-hover: #0ea5e9;
@@ -9,6 +11,8 @@
 
     /* 3. Surface / Card - Pour les blocs, cartes et la navbar */
     --color-surface: #1e293b;
+    /* Surface secondaire - lignes alternées, panneaux imbriqués, hover */
+    --color-surface-2: #273449;
 
     /* Textes associés */
     --color-text-main: #f8fafc;
@@ -24,15 +28,67 @@
 
     /* Bordures subtiles */
     --color-border: #334155;
+
+    /* Header : quasi opaque (0.94+) pour rester lisible même quand le contenu
+       affiché derrière n'est pas (encore) thème-aware. Le léger flou résiduel
+       reste purement esthétique, pas un pilier du contraste. */
+    --color-header-bg: rgba(30, 41, 59, 0.94);
+    --color-header-bg-scrolled: rgba(15, 23, 42, 0.97);
+    --color-header-shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* Mode Clair Amélioré */
+[data-theme='light'] {
+    /* 1. Primary - Bleu dynamique */
+    --color-primary: #0284c7;
+    --color-primary-hover: #0369a1;
+
+    /* 2. Background - Gris-bleu doux et clairement DISTINCT du blanc des cartes.
+       C'est ce contraste bg <-> surface qui donne de la profondeur en light mode. */
+    --color-bg: #eef2f7;
+
+    /* 3. Surface / Card - Blanc pur, qui ressort maintenant du fond gris-bleu */
+    --color-surface: #ffffff;
+    /* Surface secondaire - légèrement teintée, pour différencier zones imbriquées */
+    --color-surface-2: #f1f5f9;
+
+    /* Textes - on évite le noir pur qui fatigue l'œil */
+    --color-text-main: #0f172a;
+    --color-text-muted: #64748b;
+
+    /* 4. Green */
+    --color-success: #15803d;
+    --color-success-bg: rgba(21, 128, 61, 0.08);
+
+    /* 5. Red */
+    --color-danger: #b91c1c;
+    --color-danger-bg: rgba(185, 28, 28, 0.08);
+
+    /* Bordures - plus marquées que #e2e8f0 pour rester visibles sur fond blanc/gris clair */
+    --color-border: #d8e0ea;
+
+    /* Header : quasi opaque, pour ne pas laisser transparaître le contenu
+       encore hardcodé en dark derrière (pages non converties au thème) */
+    --color-header-bg: rgba(238, 242, 247, 0.96);
+    --color-header-bg-scrolled: rgba(255, 255, 255, 0.98);
+    --color-header-shadow: rgba(15, 23, 42, 0.1);
 }
 
 /* Application globale de base */
 body {
     background-color: var(--color-bg);
     color: var(--color-text-main);
-    font-family: century;
+    font-family: 'Century Gothic', Century, sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Application automatique sur les cartes, navbar et modales */
+.card, .navbar, .modal {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text-main);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}

@@ -7,11 +7,7 @@ import 'aos/dist/aos.css';
 import { authService } from "../Services/AuthService";
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-
-/* ============================================================
-   THEME — mêmes couleurs que Home / Skills / Contact
-   ============================================================ */
-const ACCENT = '#38bdf8';
+import { useTheme } from '../Context/ThemeContext';
 
 /* ============================================================
    HOOKS UTILITAIRES POUR LE FOND 3D UNIFIÉ
@@ -60,11 +56,13 @@ function useScrollDepth() {
 function CyborgHeadHUD({
   position,
   rotationSpeed,
-  color
+  color,
+  visorColor
 }: {
   position: [number, number, number];
   rotationSpeed: number;
   color: string;
+  visorColor: string;
 }) {
   const groupRef = useRef<any>(null);
 
@@ -86,7 +84,7 @@ function CyborgHeadHUD({
       {/* Visière / Yeux lumineux HUD */}
       <mesh position={[0, 0.25, 0.85]}>
         <boxGeometry args={[1.1, 0.2, 0.2]} />
-        <meshBasicMaterial color="#38bdf8" transparent opacity={0.8} />
+        <meshBasicMaterial color={visorColor} transparent opacity={0.8} />
       </mesh>
 
       {/* Anneau de données holographique autour du cyborg */}
@@ -98,7 +96,7 @@ function CyborgHeadHUD({
       {/* Module de la mâchoire / Nuage de points techniques */}
       <mesh position={[0, -0.6, 0]}>
         <octahedronGeometry args={[0.7, 0]} />
-        <meshBasicMaterial color="#22c55e" wireframe transparent opacity={0.3} />
+        <meshBasicMaterial color={visorColor} wireframe transparent opacity={0.3} />
       </mesh>
     </group>
   );
@@ -154,11 +152,14 @@ function SceneRig({
   return <group ref={groupRef}>{children}</group>;
 }
 
-function LoginBackground3D() {
+function LoginBackground3D({ accent, isDark }: { accent: string; isDark: boolean }) {
   const isMobile = useIsMobile();
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
-  const accent = ACCENT;
+
+  // Couleurs des cyborgs recalculées selon le thème (plus soutenues en light mode pour rester visibles)
+  const cyborgA = isDark ? '#22c55e' : '#15803d';
+  const cyborgB = isDark ? '#60a5fa' : '#2563eb';
 
   return (
     <div
@@ -173,9 +174,9 @@ function LoginBackground3D() {
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <SceneRig mouse={mouse} scroll={scroll}>
           {/* Adaptation des positions des cyborgs pour ne pas surcharger l'affichage mobile */}
-          <CyborgHeadHUD position={isMobile ? [-2.2, 1.2, -4] : [-4, 1.5, -4]} rotationSpeed={-0.3} color="#22c55e" />
-          <CyborgHeadHUD position={isMobile ? [2.2, -1.2, -4] : [4, -1.5, -4]} rotationSpeed={0.5} color="#60a5fa" />
-          <Particles count={isMobile ? 40 : 130} accent={accent} />
+          <CyborgHeadHUD position={isMobile ? [-2.2, 1.2, -4] : [-4, 1.5, -4]} rotationSpeed={-0.3} color={cyborgA} visorColor={accent} />
+          <CyborgHeadHUD position={isMobile ? [2.2, -1.2, -4] : [4, -1.5, -4]} rotationSpeed={0.5} color={cyborgB} visorColor={accent} />
+          <Particles count={isMobile ? 40 : isDark ? 130 : 85} accent={accent} />
         </SceneRig>
       </Canvas>
     </div>
@@ -185,7 +186,23 @@ function LoginBackground3D() {
 export default function LoginContent() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  // Accents recalculés selon le thème (identique à Home / About / Contact)
+  const ACCENT = isDark ? '#38bdf8' : '#0284c7';
+  const GREEN = isDark ? '#22c55e' : '#15803d';
+  const RED = isDark ? '#ef4444' : '#b91c1c';
+
+  const pageBg = isDark ? '#020617' : 'var(--color-bg)';
+  const cardBg = 'var(--color-surface)';
+  const cardBorder = '1px solid var(--color-border)';
+  const cardShadow = isDark
+    ? '0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+    : '0 20px 40px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6)';
+  const fieldBg = 'var(--color-surface-2)';
+  const fieldBgFocus = isDark ? 'rgba(255, 255, 255, 0.05)' : 'var(--color-surface)';
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -243,28 +260,28 @@ export default function LoginContent() {
 
   return (
     <div className="login-page-wrapper d-flex align-items-center justify-content-center position-relative overflow-hidden px-3 py-4" 
-         style={{ minHeight: '100vh', backgroundColor: '#020617' }}>
+         style={{ minHeight: '100vh', backgroundColor: pageBg, transition: 'background-color 0.3s ease' }}>
       
       {/* Fond 3D Interactif — Visages Cyborgs & Particules */}
-      <LoginBackground3D />
+      <LoginBackground3D accent={ACCENT} isDark={isDark} />
 
       {/* Éléments de lueur d'ambiance centrés */}
-      <div className="position-absolute top-50 start-50 translate-middle rounded-circle" style={{ width: 'min(450px, 90vw)', height: 'min(450px, 90vw)', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%)', filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
+      <div className="position-absolute top-50 start-50 translate-middle rounded-circle" style={{ width: 'min(450px, 90vw)', height: 'min(450px, 90vw)', background: isDark ? 'radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(2, 132, 199, 0.06) 0%, transparent 70%)', filter: 'blur(50px)', zIndex: 0, pointerEvents: 'none' }}></div>
 
       {/* Carte de connexion responsive et centrée */}
       <div className="login-card p-3 p-md-4 shadow-2xl rounded-4 border-0 position-relative w-100 mx-auto" 
            data-aos="zoom-in-up"
            style={{ 
              maxWidth: '380px', 
-             backgroundColor: 'rgba(255, 255, 255, 0.05)',
-             border: '1px solid rgba(255, 255, 255, 0.15)',
+             backgroundColor: cardBg,
+             border: cardBorder,
              zIndex: 1,
-             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+             boxShadow: cardShadow
            }}>
         
         <div className="text-center mb-3" data-aos="fade-down" data-aos-delay="200">
-          <h2 className="fw-bold fs-4 mb-1 text-white">Bon retour !</h2>
-          <p className="small mb-0" style={{ color: '#94a3b8' }}>
+          <h2 className="fw-bold fs-4 mb-1" style={{ color: 'var(--color-text-main)' }}>Bon retour !</h2>
+          <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
             Espace admin <span className="fw-bold" style={{ color: ACCENT }}>Portfolio</span>
           </p>
         </div>
@@ -273,9 +290,9 @@ export default function LoginContent() {
           <div className="d-flex align-items-center p-2 mb-3 rounded-3" 
                 data-aos="fade"
                 style={{ 
-                  backgroundColor: message.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                  borderLeft: `4px solid ${message.type === 'success' ? '#22c55e' : '#ef4444'}`,
-                  color: message.type === 'success' ? '#22c55e' : '#ef4444'
+                  backgroundColor: message.type === 'success' ? `${GREEN}1a` : `${RED}1a`,
+                  borderLeft: `4px solid ${message.type === 'success' ? GREEN : RED}`,
+                  color: message.type === 'success' ? GREEN : RED
                 }}>
             <span className="fs-5 me-2">
               {message.type === "success" ? <MdCheckCircleOutline /> : <MdErrorOutline />}
@@ -286,25 +303,25 @@ export default function LoginContent() {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="mb-3" data-aos="fade-up" data-aos-delay="300">
-            <label htmlFor="login-email" className="form-label small fw-bold mb-1" style={{ color: '#94a3b8' }}>Adresse Email</label>
+            <label htmlFor="login-email" className="form-label small fw-bold mb-1" style={{ color: 'var(--color-text-muted)' }}>Adresse Email</label>
             <div className="input-group input-group-sm">
-              <span className="input-group-text border-0 px-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#94a3b8' }}><MdEmail /></span>
+              <span className="input-group-text border-0 px-2" style={{ backgroundColor: fieldBg, color: 'var(--color-text-muted)' }}><MdEmail /></span>
               <input 
                 id="login-email"
                 type="email" 
                 className="form-control border-0 fs-6 shadow-none"
                 style={{ 
                   borderRadius: '0 8px 8px 0', 
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)', 
-                  color: '#ffffff',
+                  backgroundColor: fieldBg, 
+                  color: 'var(--color-text-main)',
                   transition: 'all 0.3s ease'
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.backgroundColor = fieldBgFocus;
                   e.currentTarget.style.boxShadow = `0 0 0 2px ${ACCENT}`;
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.backgroundColor = fieldBg;
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 name="email" 
@@ -317,26 +334,26 @@ export default function LoginContent() {
 
           <div className="mb-3" data-aos="fade-up" data-aos-delay="400">
             <div className="d-flex justify-content-between mb-1">
-              <label htmlFor="login-password" className="form-label small fw-bold mb-0" style={{ color: '#94a3b8' }}>Mot de passe</label>
+              <label htmlFor="login-password" className="form-label small fw-bold mb-0" style={{ color: 'var(--color-text-muted)' }}>Mot de passe</label>
             </div>
             <div className="input-group input-group-sm">
-              <span className="input-group-text border-0 px-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.08)', color: '#94a3b8' }}><MdLock /></span>
+              <span className="input-group-text border-0 px-2" style={{ backgroundColor: fieldBg, color: 'var(--color-text-muted)' }}><MdLock /></span>
               <input 
                 id="login-password"
                 type="password" 
                 className="form-control border-0 fs-6 shadow-none"
                 style={{ 
                   borderRadius: '0 8px 8px 0', 
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)', 
-                  color: '#ffffff',
+                  backgroundColor: fieldBg, 
+                  color: 'var(--color-text-main)',
                   transition: 'all 0.3s ease'
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.backgroundColor = fieldBgFocus;
                   e.currentTarget.style.boxShadow = `0 0 0 2px ${ACCENT}`;
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.backgroundColor = fieldBg;
                   e.currentTarget.style.boxShadow = 'none';
                 }}
                 name="password" 
@@ -353,7 +370,7 @@ export default function LoginContent() {
                     disabled={loading}
                     style={{ 
                       backgroundColor: ACCENT, 
-                      color: '#0f172a', 
+                      color: isDark ? '#0f172a' : '#ffffff', 
                       border: 'none',
                       fontSize: '0.9rem',
                       height: '44px',
@@ -362,7 +379,7 @@ export default function LoginContent() {
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(56, 189, 248, 0.4)';
+                      e.currentTarget.style.boxShadow = `0 4px 12px ${ACCENT}66`;
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';

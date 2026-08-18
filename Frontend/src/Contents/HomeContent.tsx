@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FaGithub, FaLinkedin, FaArrowRight } from 'react-icons/fa';
+import { useTheme } from '../Context/ThemeContext';
 
 // Déclaration de type pour contourner l'absence de types officiels dans 'aos'
 //@ts-ignore
@@ -47,8 +48,7 @@ function useMousePosition() {
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
   return pos;
-}  
-// 
+}
 
 function useScrollDepth() {
   const depth = useRef(0);
@@ -65,6 +65,9 @@ function useScrollDepth() {
 
 /* ============================================================
    FOND 3D — Scène immersive interactive (identique à SkillsContent)
+   L'accent est calculé en JS car WebGL/Three.js ne peut pas lire
+   les variables CSS directement (pas de var(--color-primary) possible
+   dans un attribut `color` de matériau Three.js).
    ============================================================ */
 function FloatingShape({
   position,
@@ -189,11 +192,10 @@ function SceneRig({
   return <group ref={groupRef}>{children}</group>;
 }
 
-function HomeBackground3D() {
+function HomeBackground3D({ accent, isDark }: { accent: string; isDark: boolean }) {
   const isMobile = useIsMobile();
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
-  const accent = '#60a5fa';
 
   const shapePositions = useMemo<[number, number, number][]>(
     () => [
@@ -212,7 +214,8 @@ function HomeBackground3D() {
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <SceneRig mouse={mouse} scroll={scroll}>
           <SkillCore accent={accent} />
-          <Particles count={isMobile ? 50 : 140} accent={accent} />
+          {/* Moins de particules en light mode : elles sont plus visibles/denses sur fond clair */}
+          <Particles count={isMobile ? 50 : isDark ? 140 : 90} accent={accent} />
           {visibleShapes.map((pos, i) => (
             <FloatingShape
               key={i}
@@ -278,6 +281,11 @@ function PhotoTiltCard({ children }: { children: React.ReactNode }) {
 }
 
 export default function HomeContent() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  // Accent Three.js recalculé en JS selon le thème (WebGL ne lit pas les CSS vars)
+  const sceneAccent = isDark ? '#60a5fa' : '#2563eb';
+
   // États pour l'effet de frappe dynamique (sur la profession / rôles)
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [currentSubText, setCurrentSubText] = useState('');
@@ -343,10 +351,19 @@ export default function HomeContent() {
         }
       `}</style>
 
-      <div className="home-page-wrapper d-flex align-items-center position-relative" style={{ minHeight: '100vh', paddingTop: '80px', backgroundColor: '#020617', overflow: 'hidden' }}>
+      <div
+        className="home-page-wrapper d-flex align-items-center position-relative"
+        style={{
+          minHeight: '100vh',
+          paddingTop: '80px',
+          backgroundColor: isDark ? '#020617' : 'var(--color-bg)',
+          overflow: 'hidden',
+          transition: 'background-color 0.3s ease'
+        }}
+      >
         
         {/* Fond 3D interactif amélioré (identique à skillscontent) */}
-        <HomeBackground3D />
+        <HomeBackground3D accent={sceneAccent} isDark={isDark} />
 
         <div className="container py-5 position-relative" style={{ zIndex: 1 }}>
           <div className="row align-items-center g-5">
@@ -354,23 +371,26 @@ export default function HomeContent() {
             {/* Colonne de gauche : Texte et Présentation */}
             <div className="col-lg-7" data-aos="fade-right">
               <div className="mb-3">
-                <span className="badge px-3 py-2 rounded-pill fw-semibold" style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#4ade80' }}>
+                <span
+                  className="badge px-3 py-2 rounded-pill fw-semibold"
+                  style={{ backgroundColor: 'var(--color-success-bg)', color: 'var(--color-success)' }}
+                >
                   👋 Bienvenue sur mon portfolio
                 </span>
               </div>
               
               {/* Le nom s'affiche d'abord en haut (statique) */}
-              <h1 className="display-4 fw-bold mb-3" style={{ color: '#ffffff' }}>
-                Salut, je suis <span style={{ color: '#60a5fa' }}>Kakabi Christian</span>
+              <h1 className="display-4 fw-bold mb-3" style={{ color: 'var(--color-text-main)' }}>
+                Salut, je suis <span style={{ color: 'var(--color-primary)' }}>Kakabi Christian</span>
               </h1>
               
               {/* Texte dynamique avec effet machine à écrire pour la profession */}
-              <h2 className="h4 fw-semibold mb-4" style={{ color: '#94a3b8', minHeight: '35px' }}>
+              <h2 className="h4 fw-semibold mb-4" style={{ color: 'var(--color-text-muted)', minHeight: '35px' }}>
                 <span>{currentSubText}</span>
                 <span className="cursor-blink" style={{ height: '24px', verticalAlign: 'middle' }}>&nbsp;</span>
               </h2>
               
-              <p className="lead mb-4" style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.7' }}>
+              <p className="lead mb-4" style={{ color: 'var(--color-text-muted)', fontSize: '1.05rem', lineHeight: '1.7' }}>
                 Passionné par la conception et le développement d'applications web performantes. 
                 Je transforme vos idées en solutions numériques robustes, de l'interface utilisateur jusqu'à l'infrastructure cloud.
               </p>
@@ -380,7 +400,7 @@ export default function HomeContent() {
                 <Link 
                   to="/project" 
                   className="btn px-4 py-3 rounded-pill fw-bold d-flex align-items-center gap-2 shadow-lg"
-                  style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none' }}
+                  style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', border: 'none' }}
                 >
                   Explorer mes projets <FaArrowRight />
                 </Link>
@@ -388,7 +408,7 @@ export default function HomeContent() {
                 <Link 
                   to="/contact" 
                   className="btn px-4 py-3 rounded-pill fw-bold d-flex align-items-center gap-2"
-                  style={{ backgroundColor: 'transparent', color: '#ffffff', border: '2px solid rgba(255, 255, 255, 0.2)' }}
+                  style={{ backgroundColor: 'transparent', color: 'var(--color-text-main)', border: '2px solid var(--color-border)' }}
                 >
                   Me contacter
                 </Link>
@@ -396,13 +416,13 @@ export default function HomeContent() {
 
               {/* Réseaux Sociaux Professionnels */}
               <div className="d-flex align-items-center gap-3 pt-3" data-aos="fade-up" data-aos-delay="400">
-                <span className="small fw-semibold" style={{ color: '#94a3b8' }}>Retrouvez-moi sur :</span>
+                <span className="small fw-semibold" style={{ color: 'var(--color-text-muted)' }}>Retrouvez-moi sur :</span>
                 <a 
                   href="https://github.com/kakabi-christian" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center shadow-sm"
-                  style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#60a5fa', border: '1px solid rgba(255, 255, 255, 0.15)' }}
+                  style={{ width: '40px', height: '40px', backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}
                   title="GitHub"
                 >
                   <FaGithub size={20} />
@@ -412,7 +432,7 @@ export default function HomeContent() {
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center shadow-sm"
-                  style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#60a5fa', border: '1px solid rgba(255, 255, 255, 0.15)' }}
+                  style={{ width: '40px', height: '40px', backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}
                   title="LinkedIn"
                 >
                   <FaLinkedin size={20} />
@@ -425,13 +445,15 @@ export default function HomeContent() {
             <div className="col-lg-5 text-center" data-aos="zoom-in" data-aos-delay="300">
               <div className="position-relative d-inline-block">
                 
-                {/* Effet d'arrière-plan lumineux */}
+                {/* Effet d'arrière-plan lumineux : intensité réduite en light mode pour éviter le halo trop visible sur fond clair */}
                 <div 
                   className="position-absolute top-50 start-50 translate-middle rounded-circle"
                   style={{ 
                     width: '320px', 
                     height: '320px', 
-                    background: 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(34, 197, 94, 0.05) 70%)',
+                    background: isDark
+                      ? 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(34, 197, 94, 0.05) 70%)'
+                      : 'radial-gradient(circle, rgba(2, 132, 199, 0.14) 0%, rgba(21, 128, 61, 0.04) 70%)',
                     zIndex: 0,
                     filter: 'blur(25px)'
                   }}
@@ -442,11 +464,12 @@ export default function HomeContent() {
                   <div 
                     className="p-3 rounded-4 position-relative shadow-2xl" 
                     style={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      backgroundColor: 'var(--color-surface)', 
+                      border: '1px solid var(--color-border)',
                       zIndex: 1,
                       maxWidth: '360px',
-                      margin: '0 auto'
+                      margin: '0 auto',
+                      transition: 'background-color 0.3s ease, border-color 0.3s ease'
                     }}
                   >
                     <img 

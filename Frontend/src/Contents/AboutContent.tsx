@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { FaGraduationCap, FaBriefcase, FaUserCheck, FaMapMarkerAlt, FaRocket, FaGamepad, FaPalette } from 'react-icons/fa';
+import { useTheme } from '../Context/ThemeContext';
 
 // Déclaration de type pour contourner l'absence de types officiels dans 'aos'
 //@ts-ignore
@@ -13,16 +14,6 @@ import { Line } from '@react-three/drei';
 import photoVeste from '../assets/Photo About 2.png';
 
 type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
-
-/* ============================================================
-   THEME — palette limitée à 3 couleurs (comme Home / Skills / Contact) :
-   ACCENT (bleu, couleur principale), GREEN (accent secondaire),
-   RED (uniquement pour la localisation). Le reste est neutre
-   (fond sombre + blancs/gris).
-   ============================================================ */
-const ACCENT = '#38bdf8';
-const GREEN = '#22c55e';
-const RED = '#ef4444';
 
 /* ============================================================
    HOOKS UTILITAIRES POUR LE FOND 3D
@@ -67,6 +58,7 @@ function useScrollDepth() {
 
 /* ============================================================
    FOND 3D — Scène immersive interactive (identique aux autres pages)
+   Accent recalculé en JS selon le thème : WebGL ne lit pas les CSS vars.
    ============================================================ */
 function FloatingShape({
   position,
@@ -191,7 +183,7 @@ function SceneRig({
   return <group ref={groupRef}>{children}</group>;
 }
 
-function AboutBackground3D() {
+function AboutBackground3D({ accent, green, isDark }: { accent: string; green: string; isDark: boolean }) {
   const isMobile = useIsMobile();
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
@@ -212,18 +204,18 @@ function AboutBackground3D() {
     <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <SceneRig mouse={mouse} scroll={scroll}>
-          <SkillCore accent={ACCENT} />
-          <Particles count={isMobile ? 50 : 140} accent={ACCENT} />
+          <SkillCore accent={accent} />
+          <Particles count={isMobile ? 50 : isDark ? 140 : 90} accent={accent} />
           {visibleShapes.map((pos, i) => (
             <FloatingShape
               key={i}
               position={pos}
               geometry={geometries[i % geometries.length]}
               speed={0.4 + i * 0.12}
-              color={i % 2 === 0 ? ACCENT : GREEN}
+              color={i % 2 === 0 ? accent : green}
             />
           ))}
-          {!isMobile && <ConnectionLines points={visibleShapes} accent={ACCENT} />}
+          {!isMobile && <ConnectionLines points={visibleShapes} accent={accent} />}
         </SceneRig>
       </Canvas>
     </div>
@@ -231,6 +223,29 @@ function AboutBackground3D() {
 }
 
 export default function AboutContent() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  // Accents recalculés selon le thème (contraste correct sur fond clair)
+  const ACCENT = isDark ? '#38bdf8' : '#0284c7';
+  const GREEN = isDark ? '#22c55e' : '#15803d';
+  const RED = isDark ? '#ef4444' : '#b91c1c';
+
+  // Fond principal : #020617 exact en dark (demande explicite), thème sinon
+  const pageBg = isDark ? '#020617' : 'var(--color-bg)';
+  // Fond "encastré" des blocs internes (timeline, contact, expérience) :
+  // en dark on garde #020617 (contraste net contre les cartes translucides),
+  // en light on utilise une nuance de surface secondaire du thème
+  const insetBg = isDark ? '#020617' : 'var(--color-surface-2)';
+
+  const cardShadowStrong = isDark
+    ? '0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+    : '0 20px 40px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6)';
+  const cardShadowMed = isDark
+    ? '0 15px 35px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+    : '0 12px 28px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)';
+  const headerBadgeShadow = isDark ? '0 8px 32px rgba(0,0,0,0.3)' : '0 8px 24px rgba(15, 23, 42, 0.08)';
+
   useEffect(() => {
     AOS.init({
       duration: 1000,
@@ -240,10 +255,13 @@ export default function AboutContent() {
   }, []);
 
   return (
-    <section className="py-5 text-light position-relative overflow-hidden" style={{ backgroundColor: '#020617', minHeight: '100vh' }}>
+    <section
+      className="py-5 position-relative overflow-hidden"
+      style={{ backgroundColor: pageBg, minHeight: '100vh', color: 'var(--color-text-main)', transition: 'background-color 0.3s ease' }}
+    >
       
       {/* Fond 3D Interactif Three.js unifié */}
-      <AboutBackground3D />
+      <AboutBackground3D accent={ACCENT} green={GREEN} isDark={isDark} />
 
       {/* Éléments d'arrière-plan lumineux subtils */}
       <div className="position-absolute top-0 start-50 translate-middle-x rounded-circle" style={{ width: '600px', height: '600px', background: `radial-gradient(circle, ${ACCENT}0d 0%, transparent 70%)`, filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }}></div>
@@ -253,15 +271,15 @@ export default function AboutContent() {
         
         {/* En-tête de la page */}
         <div className="text-center mb-5" data-aos="fade-up">
-          <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginTop: '20px' }}>
+          <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: headerBadgeShadow, marginTop: '20px' }}>
             <FaRocket style={{ color: ACCENT }} />
             <span className="small text-uppercase tracking-wider fw-semibold" style={{ color: ACCENT, letterSpacing: '2px' }}>Portfolio Officiel</span>
           </div>
-          <h2 className="fw-bold display-5 mb-2 text-white">
-            À propos de <span style={{ color: ACCENT, textShadow: `0 0 20px ${ACCENT}4d` }}>moi</span>
+          <h2 className="fw-bold display-5 mb-2" style={{ color: 'var(--color-text-main)' }}>
+            À propos de <span style={{ color: ACCENT, textShadow: isDark ? `0 0 20px ${ACCENT}4d` : 'none' }}>moi</span>
           </h2>
-          <div className="mx-auto mb-3" style={{ width: '80px', height: '4px', backgroundColor: GREEN, borderRadius: '2px', boxShadow: `0 0 10px ${GREEN}` }}></div>
-          <p className="lead fs-6 mx-auto" style={{ color: '#94a3b8', maxWidth: '700px' }}>
+          <div className="mx-auto mb-3" style={{ width: '80px', height: '4px', backgroundColor: GREEN, borderRadius: '2px', boxShadow: isDark ? `0 0 10px ${GREEN}` : 'none' }}></div>
+          <p className="lead fs-6 mx-auto" style={{ color: 'var(--color-text-muted)', maxWidth: '700px' }}>
             Découvrez mon parcours, mes compétences full-stack, mon sens du design UI/UX et ma passion pour l'innovation.
           </p>
         </div>
@@ -285,9 +303,9 @@ export default function AboutContent() {
               <div 
                 className="p-3 rounded-4 position-relative overflow-hidden shadow-2xl" 
                 style={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                  backgroundColor: 'var(--color-surface)', 
+                  border: '1px solid var(--color-border)',
+                  boxShadow: cardShadowStrong,
                   zIndex: 1
                 }}
               >
@@ -312,23 +330,23 @@ export default function AboutContent() {
             <div 
               className="p-4 p-lg-5 rounded-4 h-100 position-relative shadow-2xl" 
               style={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                backgroundColor: 'var(--color-surface)', 
+                border: '1px solid var(--color-border)',
+                boxShadow: cardShadowMed
               }}
             >
               <h3 className="fw-bold fs-4 mb-3 d-flex align-items-center gap-2" style={{ color: ACCENT }}>
                 <FaUserCheck /> Profil & Vision Créative
               </h3>
-              <p className="small lh-lg mb-3 text-white">
+              <p className="small lh-lg mb-3" style={{ color: 'var(--color-text-main)' }}>
                 Je m'appelle <strong style={{ color: ACCENT }}>Kakabi Christian</strong>, étudiant en niveau 3 en informatique (Concepteur et Développeur web Full-stack) à l'<strong style={{ color: GREEN }}>Institut Universitaire de la Côte (IUC)</strong> de Logbessou (Douala). Au quotidien, j'exerce ma passion à travers des technologies de pointe comme <strong style={{ color: ACCENT }}>Laravel et React</strong>.
               </p>
-              <p className="small lh-lg mb-3" style={{ color: '#94a3b8' }}>
+              <p className="small lh-lg mb-3" style={{ color: 'var(--color-text-muted)' }}>
                 Alliant mon expertise en <strong style={{ color: ACCENT }}><FaPalette className="me-1" /> design UI/UX (Figma)</strong> et mon amour pour l'univers immersif des <strong style={{ color: GREEN }}><FaGamepad className="me-1" /> jeux vidéo</strong>, je conçois des interfaces ergonomiques, fluides et esthétiques qui placent l'expérience utilisateur au cœur de chaque projet.
               </p>
-              <div className="d-flex align-items-center gap-2 small p-3 rounded-3 mt-4 shadow-sm" style={{ backgroundColor: '#020617', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <div className="d-flex align-items-center gap-2 small p-3 rounded-3 mt-4 shadow-sm" style={{ backgroundColor: insetBg, border: '1px solid var(--color-border)' }}>
                 <FaMapMarkerAlt style={{ color: RED }} className="fs-5" />
-                <span className="text-white">Village-Elf / Akwa, Douala — Cameroun | +237 658 78 84 48</span>
+                <span style={{ color: 'var(--color-text-main)' }}>Village-Elf / Akwa, Douala — Cameroun | +237 658 78 84 48</span>
               </div>
             </div>
           </div>
@@ -339,9 +357,9 @@ export default function AboutContent() {
           <div 
             className="p-4 p-lg-5 rounded-4 shadow-2xl" 
             style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)'
+              backgroundColor: 'var(--color-surface)', 
+              border: '1px solid var(--color-border)',
+              boxShadow: cardShadowMed
             }}
           >
             <div className="row align-items-center mb-4">
@@ -358,14 +376,14 @@ export default function AboutContent() {
                 <div 
                   className="p-4 rounded-3 h-100 shadow-sm" 
                   style={{ 
-                    backgroundColor: '#020617', 
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                    backgroundColor: insetBg, 
+                    border: '1px solid var(--color-border)'
                   }}
                 >
-                  <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#94a3b8' }}>2023 – 2024 (Première année)</span>
-                  <h4 className="fw-bold fs-6 mb-1 text-white">Institut Universitaire de la Côte (IUC)</h4>
+                  <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-muted)' }}>2023 – 2024 (Première année)</span>
+                  <h4 className="fw-bold fs-6 mb-1" style={{ color: 'var(--color-text-main)' }}>Institut Universitaire de la Côte (IUC)</h4>
                   <p className="small mb-2 fw-semibold" style={{ color: GREEN }}>Logbessou, Douala — Technologie de l'Informatique (TI)</p>
-                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
+                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
                     Réorientation réussie vers le numérique.
                   </p>
                 </div>
@@ -376,15 +394,15 @@ export default function AboutContent() {
                 <div 
                   className="p-4 rounded-3 h-100 shadow-sm" 
                   style={{ 
-                    backgroundColor: '#020617', 
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                    backgroundColor: insetBg, 
+                    border: '1px solid var(--color-border)'
                   }}
                 >
-                  <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#94a3b8' }}>2024 – 2025 (Deuxième année)</span>
-                  <h4 className="fw-bold fs-6 mb-1 text-white">IUC — Programmation et Développement d'Applications Mobiles (PAM)</h4>
+                  <span className="badge mb-2 px-2 py-1" style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-muted)' }}>2024 – 2025 (Deuxième année)</span>
+                  <h4 className="fw-bold fs-6 mb-1" style={{ color: 'var(--color-text-main)' }}>IUC — Programmation et Développement d'Applications Mobiles (PAM)</h4>
                   <p className="small mb-2 fw-semibold" style={{ color: GREEN }}>Logbessou, Douala</p>
-                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
-                     Obtention du <strong className="text-white">Diplôme d'Études Collégiales (DEC)</strong> attestant de compétences avancées en programmation et technologies mobiles.
+                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
+                     Obtention du <strong style={{ color: 'var(--color-text-main)' }}>Diplôme d'Études Collégiales (DEC)</strong> attestant de compétences avancées en programmation et technologies mobiles.
                   </p>
                 </div>
               </div>
@@ -394,15 +412,15 @@ export default function AboutContent() {
                 <div 
                   className="p-4 rounded-3 shadow-sm" 
                   style={{ 
-                    backgroundColor: '#020617', 
+                    backgroundColor: insetBg, 
                     border: `1px solid ${ACCENT}`
                   }}
                 >
                   <span className="badge mb-2 px-3 py-1" style={{ backgroundColor: ACCENT, color: '#020617', fontWeight: 'bold' }}>2025 – 2026 (Troisième année – En cours)</span>
-                  <h4 className="fw-bold fs-6 mb-1 text-white">IUC — Concepteur Développeur Web Full-Stack (CDWFS) & Perspective Internationale</h4>
+                  <h4 className="fw-bold fs-6 mb-1" style={{ color: 'var(--color-text-main)' }}>IUC — Concepteur Développeur Web Full-Stack (CDWFS) & Perspective Internationale</h4>
                   <p className="small mb-2 fw-semibold" style={{ color: ACCENT }}>Logbessou, Douala</p>
-                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
-                    Maîtrise quotidienne de la stack <strong className="text-white">Laravel & React</strong>, conception UI/UX sur Figma.
+                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
+                    Maîtrise quotidienne de la stack <strong style={{ color: 'var(--color-text-main)' }}>Laravel & React</strong>, conception UI/UX sur Figma.
                   </p>
                 </div>
               </div>
@@ -417,9 +435,9 @@ export default function AboutContent() {
             <div 
               className="p-4 p-lg-5 rounded-4 shadow-2xl" 
               style={{ 
-                backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.4)'
+                backgroundColor: 'var(--color-surface)', 
+                border: '1px solid var(--color-border)',
+                boxShadow: cardShadowMed
               }}
             >
               <div className="row align-items-center mb-4">
@@ -433,16 +451,16 @@ export default function AboutContent() {
               <div 
                 className="p-4 rounded-3 shadow-sm" 
                 style={{ 
-                  backgroundColor: '#020617', 
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                  backgroundColor: insetBg, 
+                  border: '1px solid var(--color-border)'
                 }}
               >
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                  <h4 className="fw-bold fs-6 mb-0 text-white">Stage Académique – LEVEGI</h4>
+                  <h4 className="fw-bold fs-6 mb-0" style={{ color: 'var(--color-text-main)' }}>Stage Académique – LEVEGI</h4>
                 </div>
-                <p className="small mb-2" style={{ color: '#94a3b8' }}><FaMapMarkerAlt className="me-1" style={{ color: RED }} /> Akwa, Douala</p>
-                <p className="small mb-3 text-white">
-                  Stage académique de deux mois effectué en vue de l'obtention du DEC. Supervision technique assurée par <strong className="text-white">M. PAGOUEN KAWE Ragil</strong>.
+                <p className="small mb-2" style={{ color: 'var(--color-text-muted)' }}><FaMapMarkerAlt className="me-1" style={{ color: RED }} /> Akwa, Douala</p>
+                <p className="small mb-3" style={{ color: 'var(--color-text-main)' }}>
+                  Stage académique de deux mois effectué en vue de l'obtention du DEC. Supervision technique assurée par <strong style={{ color: 'var(--color-text-main)' }}>M. PAGOUEN KAWE Ragil</strong>.
                 </p>
                 <div className="d-flex flex-wrap gap-2 small">
                   <span className="badge px-3 py-1" style={{ backgroundColor: `${ACCENT}26`, color: ACCENT, border: `1px solid ${ACCENT}4d` }}>Programmation Application Mobile (PAM)</span>

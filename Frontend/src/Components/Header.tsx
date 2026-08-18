@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import logo from '../assets/Logo-app.png';
+import { MdDarkMode, MdLightMode } from 'react-icons/md';
+import { useTheme } from '../Context/ThemeContext';
+import logo from '../assets/Logo-app-v2.png';
 
 const ACCENT = '#38bdf8';
 
@@ -16,6 +18,8 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   const closeMenu = () => setIsOpen(false);
 
@@ -31,13 +35,16 @@ export default function Header() {
       <style>{`
         .app-header {
           transition: background-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
-          background-color: rgba(30, 41, 59, 0.75);
+          background-color: var(--color-header-bg);
           backdrop-filter: blur(6px);
           -webkit-backdrop-filter: blur(6px);
+          /* Ombre permanente en bas, même hors scroll, pour détacher visuellement
+             le header du contenu de la page quelle que soit sa couleur */
+          box-shadow: 0 4px 18px var(--color-header-shadow);
         }
         .app-header.is-scrolled {
-          background-color: rgba(15, 23, 42, 0.95);
-          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+          background-color: var(--color-header-bg-scrolled);
+          box-shadow: 0 6px 24px var(--color-header-shadow);
         }
 
         .app-header .navbar-brand {
@@ -61,7 +68,7 @@ export default function Header() {
         }
 
         .app-header .brand-text {
-          color: #ffffff;
+          color: var(--color-text-main);
           font-size: clamp(11px, 2.2vw, 15px);
           white-space: nowrap;
           transition: color 0.3s ease;
@@ -81,9 +88,10 @@ export default function Header() {
           }
         }
 
-        /* Liens de nav : soulignement animé depuis le centre + couleur accent */
+        /* Liens de nav - Utilisation de var(--color-text-main) pour changer dynamiquement de couleur */
         .app-header .nav-link {
           position: relative;
+          color: var(--color-text-main) !important;
           transition: color 0.25s ease;
         }
         .app-header .nav-link::after {
@@ -100,19 +108,34 @@ export default function Header() {
         .app-header .nav-link:hover {
           color: ${ACCENT} !important;
         }
-        .app-header .nav-link:hover::after {
+        .app-header .nav-link:hover::after,
+        .app-header .nav-link.is-active::after {
           width: 70%;
           left: 15%;
         }
         .app-header .nav-link.is-active {
           color: ${ACCENT} !important;
         }
-        .app-header .nav-link.is-active::after {
-          width: 70%;
-          left: 15%;
+
+        /* Bouton Theme Toggle */
+        .app-header .theme-toggle-btn {
+          background: none;
+          border: 1px solid var(--color-border);
+          color: var(--color-text-main);
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.25s ease;
+        }
+        .app-header .theme-toggle-btn:hover {
+          border-color: ${ACCENT};
+          color: ${ACCENT};
+          transform: scale(1.08);
         }
 
-        /* Bouton Login : scale + halo pulsé au survol */
         .app-header .login-btn {
           transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
         }
@@ -121,7 +144,7 @@ export default function Header() {
           box-shadow: 0 0 18px ${ACCENT}99;
         }
 
-        /* Hamburger animé : visible uniquement sur mobile/tablette (< 992px) */
+        /* Burger menu mobile */
         .app-header .burger {
           width: 26px;
           height: 20px;
@@ -130,18 +153,14 @@ export default function Header() {
           border: none;
           padding: 4px;
           cursor: pointer;
-          display: none; /* Masqué par défaut sur desktop */
-        }
-        .app-header .burger:focus {
-          outline: none;
-          box-shadow: none;
+          display: none;
         }
         .app-header .burger span {
           position: absolute;
           left: 4px;
           right: 4px;
           height: 2px;
-          background: #ffffff;
+          background: var(--color-text-main);
           border-radius: 2px;
           transition: transform 0.3s ease, opacity 0.2s ease, top 0.3s ease;
         }
@@ -153,18 +172,13 @@ export default function Header() {
           top: 11px;
           transform: rotate(45deg);
         }
-        .app-header .burger.is-open span:nth-child(2) {
-          opacity: 0;
-        }
+        .app-header .burger.is-open span:nth-child(2) { opacity: 0; }
         .app-header .burger.is-open span:nth-child(3) {
           top: 11px;
           transform: rotate(-45deg);
         }
 
-        /* Menu mobile : fondu + glissement */
-        .app-header .navbar-collapse {
-          display: none;
-        }
+        .app-header .navbar-collapse { display: none; }
         .app-header .navbar-collapse.is-open {
           display: block;
           animation: navFadeIn 0.28s ease forwards;
@@ -175,35 +189,27 @@ export default function Header() {
         }
 
         @media (min-width: 992px) {
-          .app-header .navbar-collapse {
-            display: flex !important;
-            animation: none !important;
-          }
+          .app-header .navbar-collapse { display: flex !important; animation: none !important; }
         }
 
         @media (max-width: 991.98px) {
-          .app-header .burger {
-            display: block; /* Affiché uniquement en mode responsive */
-          }
+          .app-header .burger { display: block; }
           .app-header .navbar-collapse {
             padding: 1rem 0 1.25rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid var(--color-border);
             margin-top: 0.75rem;
           }
-          .app-header .nav-link {
-            padding: 0.6rem 0.25rem;
-          }
-          .app-header .nav-link::after {
-            bottom: -1px;
-          }
+          .app-header .nav-link { padding: 0.6rem 0.25rem; }
           .app-header .nav-item + .nav-item {
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid var(--color-border);
           }
-          .app-header .login-btn {
-            display: block;
-            width: 100%;
-            text-align: center;
+          .app-header .mobile-theme-container {
+            border-top: 1px solid var(--color-border);
+            padding-top: 0.75rem;
             margin-top: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
           }
         }
       `}</style>
@@ -211,29 +217,26 @@ export default function Header() {
       <nav className={`app-header navbar navbar-expand-lg fixed-top shadow-sm ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="container px-3">
           <Link className="navbar-brand" to="/" onClick={closeMenu}>
-            <img
-              src={logo}
-              alt="Kakabi Portfolio Logo"
-              className="brand-logo img-fluid"
-            />
+            <img src={logo} alt="Kakabi Portfolio Logo" className="brand-logo img-fluid" />
             <span className="brand-text">PORTFOLIO</span>
           </Link>
 
-          {/* Hamburger affiché uniquement en mode responsive */}
-          <button
-            className={`burger ${isOpen ? 'is-open' : ''}`}
-            type="button"
-            onClick={() => setIsOpen((prev) => !prev)}
-            aria-controls="navbarNav"
-            aria-expanded={isOpen}
-            aria-label="Toggle navigation"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+          {/* Burger affiché sur mobile uniquement */}
+          <div className="d-flex align-items-center">
+            <button
+              className={`burger ${isOpen ? 'is-open' : ''}`}
+              type="button"
+              onClick={() => setIsOpen((prev) => !prev)}
+              aria-controls="navbarNav"
+              aria-expanded={isOpen}
+              aria-label="Toggle navigation"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </div>
 
-          {/* Liens de navigation */}
           <div className={`navbar-collapse justify-content-end ${isOpen ? 'is-open' : ''}`} id="navbarNav">
             <ul className="navbar-nav align-items-lg-center gap-lg-2">
               {NAV_LINKS.map((link) => {
@@ -241,7 +244,7 @@ export default function Header() {
                 return (
                   <li className="nav-item" key={link.to}>
                     <Link
-                      className={`nav-link text-light fw-medium ${isActive ? 'is-active' : ''}`}
+                      className={`nav-link fw-medium ${isActive ? 'is-active' : ''}`}
                       to={link.to}
                       onClick={closeMenu}
                     >
@@ -250,6 +253,7 @@ export default function Header() {
                   </li>
                 );
               })}
+
               <li className="nav-item ms-lg-3">
                 <Link
                   className="login-btn btn btn-sm px-3 py-2 fw-semibold text-dark"
@@ -259,6 +263,19 @@ export default function Header() {
                 >
                   Connexion
                 </Link>
+              </li>
+
+              {/* Bouton Dark/Light mode */}
+              <li className="nav-item ms-lg-2 d-flex align-items-center justify-content-lg-center mobile-theme-container">
+                <span className="d-lg-none fw-medium" style={{ color: 'var(--color-text-main)' }}>Changer le thème</span>
+                <button
+                  onClick={toggleTheme}
+                  className="theme-toggle-btn"
+                  title={isDark ? "Activer le mode clair" : "Activer le mode sombre"}
+                  aria-label="Toggle theme"
+                >
+                  {isDark ? <MdLightMode size={18} /> : <MdDarkMode size={18} />}
+                </button>
               </li>
             </ul>
           </div>

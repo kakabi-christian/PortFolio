@@ -14,17 +14,13 @@ import { ProjectService } from '../Services/ProjectService';
 import type { Project } from '../Models/Project';
 import photo from '../assets/Project1.png';
 import { getStorageUrl } from '../Services/api';
+import { useTheme } from '../Context/ThemeContext';
 
 // Photo utilisée à la fois pour l'en-tête (carte tilt à droite, comme sur Skills)
 // et comme image de secours pour un projet qui n'a pas encore d'image en base.
 const headerPhoto = photo;
 
 type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
-
-/* ============================================================
-   THEME — mêmes couleurs que Home / Skills / Contact
-   ============================================================ */
-const ACCENT = '#38bdf8';
 
 /* ============================================================
    HOOKS UTILITAIRES POUR LE FOND 3D UNIFIÉ
@@ -84,6 +80,10 @@ function FloatingShape({
   const meshRef = useRef<THREE.Mesh>(null);
   const current = useRef(new THREE.Color(color));
   const target = useMemo(() => new THREE.Color(color), [color]);
+
+  useEffect(() => {
+    target.set(color);
+  }, [color, target]);
 
   useFrame(({ clock }) => {
     const mesh = meshRef.current;
@@ -193,7 +193,7 @@ function SceneRig({
   return <group ref={groupRef}>{children}</group>;
 }
 
-function ProjectsBackground3D({ isMobile }: { isMobile: boolean }) {
+function ProjectsBackground3D({ isMobile, accent, isDark }: { isMobile: boolean; accent: string; isDark: boolean }) {
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
 
@@ -213,18 +213,18 @@ function ProjectsBackground3D({ isMobile }: { isMobile: boolean }) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <SceneRig mouse={mouse} scroll={scroll}>
-          <BackgroundCore accent={ACCENT} />
-          <Particles count={isMobile ? 50 : 140} accent={ACCENT} />
+          <BackgroundCore accent={accent} />
+          <Particles count={isMobile ? 50 : isDark ? 140 : 90} accent={accent} />
           {visibleShapes.map((pos, i) => (
             <FloatingShape
               key={i}
               position={pos}
               geometry={geometries[i % geometries.length]}
               speed={0.4 + i * 0.12}
-              color={ACCENT}
+              color={accent}
             />
           ))}
-          {!isMobile && <ConnectionLines points={visibleShapes} accent={ACCENT} />}
+          {!isMobile && <ConnectionLines points={visibleShapes} accent={accent} />}
         </SceneRig>
       </Canvas>
     </div>
@@ -234,7 +234,7 @@ function ProjectsBackground3D({ isMobile }: { isMobile: boolean }) {
 /* ============================================================
    CARTE PHOTO D'EN-TÊTE AVEC EFFET TILT 3D (comme sur Skills)
    ============================================================ */
-function HeaderPhotoTiltCard({ children }: { children: React.ReactNode }) {
+function HeaderPhotoTiltCard({ accent, children }: { accent: string; children: React.ReactNode }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -264,7 +264,7 @@ function HeaderPhotoTiltCard({ children }: { children: React.ReactNode }) {
         transformStyle: 'preserve-3d',
         transformPerspective: 900,
         display: 'inline-block',
-        filter: `drop-shadow(0 0 24px ${ACCENT}33)`
+        filter: `drop-shadow(0 0 24px ${accent}33)`
       }}
     >
       {children}
@@ -315,16 +315,32 @@ function ProjectTiltCard({ children }: { children: React.ReactNode }) {
 /* ============================================================
    CARTE DE PROJET
    ============================================================ */
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+function ProjectCard({
+  project,
+  index,
+  accent,
+  isDark
+}: {
+  project: Project;
+  index: number;
+  accent: string;
+  isDark: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
 
-const imageSrc = project.image_url 
-    ? getStorageUrl(project.image_url) 
+  const imageSrc = project.image_url
+    ? getStorageUrl(project.image_url)
     : photo;
 
   const description = project.description || '';
   // Un "voir plus" n'a de sens que si le texte est assez long pour être tronqué
   const isLong = description.length > 120;
+
+  const cardBg = 'var(--color-surface)';
+  const cardBorder = '1px solid var(--color-border)';
+  const cardShadow = isDark
+    ? '0 10px 30px rgba(0, 0, 0, 0.35)'
+    : '0 10px 26px rgba(15, 23, 42, 0.1)';
 
   return (
     <div
@@ -336,13 +352,13 @@ const imageSrc = project.image_url
         <div
           className="h-100 rounded-4 overflow-hidden position-relative"
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.35)',
+            backgroundColor: cardBg,
+            border: cardBorder,
+            boxShadow: cardShadow,
             transition: 'border-color 0.3s ease'
           }}
         >
-          <div style={{ width: '100%', height: '200px', overflow: 'hidden', backgroundColor: '#0b1224' }}>
+          <div style={{ width: '100%', height: '200px', overflow: 'hidden', backgroundColor: isDark ? '#0b1224' : 'var(--color-surface-2)' }}>
             <img
               src={imageSrc}
               alt={project.title}
@@ -351,15 +367,15 @@ const imageSrc = project.image_url
           </div>
 
           <div className="p-4 d-flex flex-column" style={{ minHeight: '180px' }}>
-            <h5 className="fw-bold text-white mb-2">{project.title}</h5>
+            <h5 className="fw-bold mb-2" style={{ color: 'var(--color-text-main)' }}>{project.title}</h5>
 
             <p
               className="small mb-1"
               style={
                 expanded
-                  ? { color: '#94a3b8' }
+                  ? { color: 'var(--color-text-muted)' }
                   : {
-                      color: '#94a3b8',
+                      color: 'var(--color-text-muted)',
                       display: '-webkit-box',
                       WebkitLineClamp: 3,
                       WebkitBoxOrient: 'vertical',
@@ -375,7 +391,7 @@ const imageSrc = project.image_url
                 type="button"
                 onClick={() => setExpanded((prev) => !prev)}
                 className="btn btn-sm p-0 mb-3 align-self-start fw-semibold"
-                style={{ color: ACCENT, background: 'none', border: 'none' }}
+                style={{ color: accent, background: 'none', border: 'none' }}
               >
                 {expanded ? 'Voir moins' : 'Voir plus'}
               </button>
@@ -390,10 +406,10 @@ const imageSrc = project.image_url
                   rel="noreferrer"
                   className="btn btn-sm fw-semibold d-flex align-items-center gap-2"
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    color: '#ffffff',
+                    backgroundColor: 'var(--color-surface-2)',
+                    color: 'var(--color-text-main)',
                     borderRadius: '10px',
-                    border: '1px solid rgba(255, 255, 255, 0.15)'
+                    border: '1px solid var(--color-border)'
                   }}
                 >
                   <FaGithub /> Code
@@ -406,8 +422,8 @@ const imageSrc = project.image_url
                   rel="noreferrer"
                   className="btn btn-sm fw-semibold d-flex align-items-center gap-2"
                   style={{
-                    backgroundColor: ACCENT,
-                    color: '#020617',
+                    backgroundColor: accent,
+                    color: isDark ? '#020617' : '#ffffff',
                     borderRadius: '10px',
                     border: 'none'
                   }}
@@ -427,6 +443,17 @@ const imageSrc = project.image_url
    COMPOSANT PRINCIPAL
    ============================================================ */
 export default function ProjectsContent() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  // Accents recalculés selon le thème (identique à Home / About / Contact / Login)
+  const ACCENT = isDark ? '#38bdf8' : '#0284c7';
+  const GREEN = isDark ? '#22c55e' : '#15803d';
+
+  const pageBg = isDark ? '#020617' : 'var(--color-bg)';
+  const cardBg = 'var(--color-surface)';
+  const cardBorder = '1px solid var(--color-border)';
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -456,48 +483,48 @@ export default function ProjectsContent() {
   );
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: '#020617', paddingTop: '80px', paddingBottom: '60px' }}>
-      <ProjectsBackground3D isMobile={isMobile} />
+    <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: pageBg, paddingTop: '80px', paddingBottom: '60px', transition: 'background-color 0.3s ease' }}>
+      <ProjectsBackground3D isMobile={isMobile} accent={ACCENT} isDark={isDark} />
 
-      <div className="container-fluid position-relative py-4 px-4 px-lg-5" style={{ zIndex: 2, color: '#ffffff' }}>
+      <div className="container-fluid position-relative py-4 px-4 px-lg-5" style={{ zIndex: 2, color: 'var(--color-text-main)' }}>
         {/* En-tête — texte aligné à gauche, photo à droite (comme Home / Skills / Contact) */}
         <div className="row align-items-center mb-5 g-4" data-aos="fade-up">
           <div className="col-lg-7 text-start">
             <div
               className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: `1px solid ${ACCENT}55` }}
+              style={{ backgroundColor: cardBg, border: `1px solid ${ACCENT}55` }}
             >
               <MdFolder style={{ color: ACCENT }} />
               <span className="small text-uppercase fw-semibold" style={{ color: ACCENT, letterSpacing: '2px' }}>
                 Portfolio
               </span>
             </div>
-            <h2 className="fw-bold display-5 mb-3 text-white" style={{ letterSpacing: '-0.5px' }}>
+            <h2 className="fw-bold display-5 mb-3" style={{ color: 'var(--color-text-main)', letterSpacing: '-0.5px' }}>
               Mes <span style={{ color: ACCENT }}>Projets</span>
             </h2>
-            <p className="lead fs-6 mb-4" style={{ color: '#cbd5e1', maxWidth: '650px' }}>
+            <p className="lead fs-6 mb-4" style={{ color: 'var(--color-text-muted)', maxWidth: '650px' }}>
               Une sélection de projets web et mobiles que j'ai conçus et développés, du prototypage à la mise en production.
             </p>
 
             <div className="row g-3 mt-2" style={{ maxWidth: '680px' }}>
               <div className="col-sm-6" data-aos="fade-up" data-aos-delay="100">
-                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: cardBg, border: cardBorder }}>
                   <div className="d-flex align-items-center gap-2 mb-2">
                     <MdCode style={{ color: ACCENT }} className="fs-5" />
-                    <h6 className="fw-bold mb-0 text-white">Réalisations concrètes</h6>
+                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Réalisations concrètes</h6>
                   </div>
-                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
+                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
                     Des applications complètes, du back-end à l'interface, pensées pour être robustes et évolutives.
                   </p>
                 </div>
               </div>
               <div className="col-sm-6" data-aos="fade-up" data-aos-delay="200">
-                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: cardBg, border: cardBorder }}>
                   <div className="d-flex align-items-center gap-2 mb-2">
-                    <MdRocket style={{ color: '#22c55e' }} className="fs-5" />
-                    <h6 className="fw-bold mb-0 text-white">Code source & démos</h6>
+                    <MdRocket style={{ color: GREEN }} className="fs-5" />
+                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Code source & démos</h6>
                   </div>
-                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
+                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
                     Chaque projet donne accès au dépôt GitHub et, quand c'est possible, à une démo en ligne.
                   </p>
                 </div>
@@ -512,18 +539,20 @@ export default function ProjectsContent() {
                 style={{
                   width: '380px',
                   height: '380px',
-                  background: `radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(34,197,94,0.05) 70%)`,
+                  background: isDark
+                    ? 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(34,197,94,0.05) 70%)'
+                    : 'radial-gradient(circle, rgba(2, 132, 199, 0.14) 0%, rgba(21, 128, 61, 0.04) 70%)',
                   zIndex: 0,
                   filter: 'blur(35px)'
                 }}
               ></div>
 
-              <HeaderPhotoTiltCard>
+              <HeaderPhotoTiltCard accent={ACCENT}>
                 <div
                   className="p-3 rounded-4 position-relative shadow-2xl"
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    backgroundColor: cardBg,
+                    border: cardBorder,
                     zIndex: 1,
                     width: '100%',
                     maxWidth: '460px',
@@ -555,19 +584,19 @@ export default function ProjectsContent() {
                 borderRadius: '16px',
                 overflow: 'hidden',
                 border: `1px solid ${ACCENT}55`,
-                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                backgroundColor: cardBg
               }}
             >
-              <span className="input-group-text border-0 bg-transparent ps-3" style={{ color: '#94a3b8' }}>
+              <span className="input-group-text border-0 bg-transparent ps-3" style={{ color: 'var(--color-text-muted)' }}>
                 <MdSearch size={22} />
               </span>
               <input
                 type="text"
-                className="form-control shadow-none border-0 py-3 bg-transparent text-white"
+                className="form-control shadow-none border-0 py-3 bg-transparent"
                 placeholder="Rechercher un projet..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ fontSize: '0.95rem', color: '#ffffff' }}
+                style={{ fontSize: '0.95rem', color: 'var(--color-text-main)' }}
               />
             </div>
           </div>
@@ -577,20 +606,20 @@ export default function ProjectsContent() {
         {loading ? (
           <div className="text-center py-5">
             <div className="spinner-border" role="status" style={{ width: '3rem', height: '3rem', color: ACCENT }}></div>
-            <p className="mt-3 fw-semibold text-white">Chargement de mes projets...</p>
+            <p className="mt-3 fw-semibold" style={{ color: 'var(--color-text-main)' }}>Chargement de mes projets...</p>
           </div>
         ) : filteredProjects.length === 0 ? (
           <div
             className="text-center py-5 card border-0 shadow-sm p-5 mx-auto"
-            style={{ borderRadius: '20px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', maxWidth: '600px' }}
+            style={{ borderRadius: '20px', backgroundColor: cardBg, border: cardBorder, maxWidth: '600px' }}
           >
-            <MdImage size={40} style={{ color: '#94a3b8', margin: '0 auto 12px' }} />
-            <h4 className="fw-semibold text-white">Aucun projet trouvé.</h4>
+            <MdImage size={40} style={{ color: 'var(--color-text-muted)', margin: '0 auto 12px' }} />
+            <h4 className="fw-semibold" style={{ color: 'var(--color-text-main)' }}>Aucun projet trouvé.</h4>
           </div>
         ) : (
           <div className="row g-4">
             {filteredProjects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
+              <ProjectCard key={project.id} project={project} index={index} accent={ACCENT} isDark={isDark} />
             ))}
           </div>
         )}

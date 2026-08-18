@@ -25,6 +25,7 @@ import photo1 from '../assets/Skills.png';
 import { toolService } from '../Services/ToolService';
 import { frameworkService } from '../Services/FrameworkService';
 import { databaseService } from '../Services/DatabaseService';
+import { useTheme } from '../Context/ThemeContext';
 
 import type { Tool } from '../Models/Tool';
 import type { Framework } from '../Models/Framework';
@@ -58,13 +59,26 @@ function clampPct(v: number) {
 
 /* ============================================================
    THEME — un "univers" visuel distinct par catégorie
+   Deux palettes (dark / light) : recalculées en JS car WebGL/Three.js
+   ne peut pas lire les variables CSS directement.
    ============================================================ */
-const UNIVERSE: Record<TabKey, { accent: string; glow: string; label: string; geometries: GeometryKind[] }> = {
+const UNIVERSE_DARK: Record<TabKey, { accent: string; glow: string; label: string; geometries: GeometryKind[] }> = {
   all:        { accent: '#60a5fa', glow: 'rgba(96,165,250,0.35)',  label: 'Vue globale',        geometries: ['icosahedron', 'torus', 'octahedron'] },
   frameworks: { accent: '#3b82f6', glow: 'rgba(59,130,246,0.40)',  label: 'Frameworks',         geometries: ['icosahedron', 'octahedron'] },
   databases:  { accent: '#22d3ee', glow: 'rgba(34,211,238,0.40)',  label: 'Bases de données',   geometries: ['torus', 'icosahedron'] },
   tools:      { accent: '#8b7cf6', glow: 'rgba(139,124,246,0.38)', label: 'Outils & DevOps',    geometries: ['octahedron', 'torus'] }
 };
+
+const UNIVERSE_LIGHT: Record<TabKey, { accent: string; glow: string; label: string; geometries: GeometryKind[] }> = {
+  all:        { accent: '#2563eb', glow: 'rgba(37,99,235,0.16)',   label: 'Vue globale',        geometries: ['icosahedron', 'torus', 'octahedron'] },
+  frameworks: { accent: '#1d4ed8', glow: 'rgba(29,78,216,0.18)',   label: 'Frameworks',         geometries: ['icosahedron', 'octahedron'] },
+  databases:  { accent: '#0284c7', glow: 'rgba(2,132,199,0.18)',   label: 'Bases de données',   geometries: ['torus', 'icosahedron'] },
+  tools:      { accent: '#7c3aed', glow: 'rgba(124,58,237,0.16)',  label: 'Outils & DevOps',    geometries: ['octahedron', 'torus'] }
+};
+
+function getUniverse(isDark: boolean) {
+  return isDark ? UNIVERSE_DARK : UNIVERSE_LIGHT;
+}
 
 /* ============================================================
    HOOKS UTILITAIRES
@@ -249,10 +263,10 @@ function BackgroundSceneRig({
   return <group ref={groupRef}>{children}</group>;
 }
 
-function LabBackground3D({ activeTab, isMobile }: { activeTab: TabKey; isMobile: boolean }) {
+function LabBackground3D({ activeTab, isMobile, isDark }: { activeTab: TabKey; isMobile: boolean; isDark: boolean }) {
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
-  const theme = UNIVERSE[activeTab];
+  const theme = getUniverse(isDark)[activeTab];
 
   const shapePositions = useMemo<[number, number, number][]>(
     () => [
@@ -270,7 +284,8 @@ function LabBackground3D({ activeTab, isMobile }: { activeTab: TabKey; isMobile:
       <Canvas camera={{ position: [0, 0, 8], fov: 50 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
         <BackgroundSceneRig mouse={mouse} scroll={scroll}>
           <BackgroundCore accent={theme.accent} />
-          <BackgroundParticles count={isMobile ? 50 : 140} accent={theme.accent} />
+          {/* Moins de particules en light mode : plus visibles/denses sur fond clair */}
+          <BackgroundParticles count={isMobile ? 50 : isDark ? 140 : 90} accent={theme.accent} />
           {visibleShapes.map((pos, i) => (
             <BackgroundFloatingShape
               key={i}
@@ -518,10 +533,8 @@ function OrbitParticleLayer({
 
 /* ============================================================
    ANNEAU DE MAÎTRISE — piloté par un spring physique
-   (se relance à chaque montage, donc à chaque survol puisque
-   le composant n'est monté que quand le nœud est actif)
    ============================================================ */
-function CircularLevel({ percentage, accent, size = 40 }: { percentage: number; accent: string; size?: number }) {
+function CircularLevel({ percentage, accent, size = 40, isDark }: { percentage: number; accent: string; size?: number; isDark: boolean }) {
   const radius = (size - 6) / 2;
   const circumference = 2 * Math.PI * radius;
 
@@ -531,7 +544,6 @@ function CircularLevel({ percentage, accent, size = 40 }: { percentage: number; 
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    // Départ à 0 puis élan vers la vraie valeur -> effet "chargement" à chaque survol
     motionPercentage.set(0);
     const raf = requestAnimationFrame(() => motionPercentage.set(percentage));
     return () => cancelAnimationFrame(raf);
@@ -543,9 +555,12 @@ function CircularLevel({ percentage, accent, size = 40 }: { percentage: number; 
     return unsubscribe;
   }, [springPercentage]);
 
+  const trackColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.12)';
+  const textColor = isDark ? '#ffffff' : '#0f172a';
+
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={3} />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={trackColor} strokeWidth={3} />
       <motion.circle
         cx={size / 2}
         cy={size / 2}
@@ -566,7 +581,7 @@ function CircularLevel({ percentage, accent, size = 40 }: { percentage: number; 
         fontSize={size * 0.26}
         fontFamily="monospace"
         fontWeight={700}
-        fill="#ffffff"
+        fill={textColor}
       >
         {display}%
       </text>
@@ -577,18 +592,24 @@ function CircularLevel({ percentage, accent, size = 40 }: { percentage: number; 
 /* ============================================================
    PANNEAU HOLOGRAPHIQUE (info compétence au survol)
    ============================================================ */
-function HolographicPanel({ item, accent, active }: { item: SkillItem; accent: string; active: boolean }) {
+function HolographicPanel({ item, accent, active, isDark }: { item: SkillItem; accent: string; active: boolean; isDark: boolean }) {
+  const panelBg = isDark
+    ? 'linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))'
+    : 'linear-gradient(160deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72))';
+  const textColor = isDark ? '#ffffff' : '#0f172a';
+  const sweepColor = isDark ? `${accent}33` : `${accent}22`;
+
   return (
     <motion.div
       style={{
         width: active ? 172 : 128,
         padding: active ? '12px 14px' : '7px 10px',
         borderRadius: 12,
-        background: 'linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))',
+        background: panelBg,
         border: `1px solid ${active ? accent : accent + '55'}`,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        color: '#fff',
+        color: textColor,
         display: 'flex',
         alignItems: 'center',
         gap: 8,
@@ -618,7 +639,7 @@ function HolographicPanel({ item, accent, active }: { item: SkillItem; accent: s
             top: 0,
             bottom: 0,
             width: '40%',
-            background: `linear-gradient(90deg, transparent, ${accent}33, transparent)`,
+            background: `linear-gradient(90deg, transparent, ${sweepColor}, transparent)`,
             pointerEvents: 'none'
           }}
           initial={{ x: '-60%' }}
@@ -644,7 +665,7 @@ function HolographicPanel({ item, accent, active }: { item: SkillItem; accent: s
           <div style={{ fontSize: 9, color: accent, textTransform: 'uppercase', letterSpacing: 1 }}>{item.badge}</div>
         )}
       </div>
-      {active && <CircularLevel percentage={item.level} accent={accent} size={34} />}
+      {active && <CircularLevel percentage={item.level} accent={accent} size={34} isDark={isDark} />}
     </motion.div>
   );
 }
@@ -720,7 +741,8 @@ function SkillNode({
   hoveredId,
   setHoveredId,
   collapsing,
-  ringCountFactor
+  ringCountFactor,
+  isDark
 }: {
   item: SkillItem;
   layout: OrbitLayout;
@@ -730,6 +752,7 @@ function SkillNode({
   setHoveredId: (id: string | null) => void;
   collapsing: boolean;
   ringCountFactor: number;
+  isDark: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
@@ -812,7 +835,7 @@ function SkillNode({
           <meshBasicMaterial color={accent} wireframe transparent opacity={0.85} />
         </mesh>
         <Html center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-          <HolographicPanel item={item} accent={accent} active={isHovered} />
+          <HolographicPanel item={item} accent={accent} active={isHovered} isDark={isDark} />
         </Html>
       </group>
     </group>
@@ -833,7 +856,7 @@ function OrbitPortalFlash({ active, accent }: { active: boolean; accent: string 
           exit={{ opacity: 0 }}
           transition={{ duration: 0.9, ease: 'easeOut' }}
           style={{
-            position: 'fixed',
+            position: 'absolute',
             inset: 0,
             zIndex: 3,
             pointerEvents: 'none',
@@ -847,6 +870,12 @@ function OrbitPortalFlash({ active, accent }: { active: boolean; accent: string 
 
 /* ============================================================
    CANVAS DÉDIÉ À L'AFFICHAGE ORBITAL DES COMPÉTENCES
+   ------------------------------------------------------------
+   ⚠️ FIX : ce n'est PAS un calque "fixed" plein écran (ça, c'est
+   ce qui causait le recouvrement du texte). C'est un bloc normal,
+   dans le flux de page, avec une hauteur garantie (vh + minHeight
+   en px en filet de sécurité). "overflow" reste visible pour ne
+   pas couper les info-bulles holographiques au survol.
    ============================================================ */
 function SkillsOrbitCanvas({
   theme,
@@ -858,7 +887,8 @@ function SkillsOrbitCanvas({
   collapsing,
   flash,
   isMobile,
-  displayedTab
+  displayedTab,
+  isDark
 }: {
   theme: { accent: string };
   items: SkillItem[];
@@ -870,17 +900,35 @@ function SkillsOrbitCanvas({
   flash: boolean;
   isMobile: boolean;
   displayedTab: TabKey;
+  isDark: boolean;
 }) {
   const mouse = useMousePosition();
   const scroll = useScrollDepth();
+  const universe = getUniverse(isDark);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'auto' }}>
-      <Canvas camera={{ position: [0, 1.1, 9], fov: 52 }} dpr={isMobile ? [1, 1] : [1, 1.5]}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        // hauteur garantie : vh + fallback en px pour éviter tout
+        // écrasement à 0px qui rendrait le canvas invisible
+        height: isMobile ? '60vh' : '75vh',
+        minHeight: isMobile ? '420px' : '560px',
+        zIndex: 1,
+        pointerEvents: 'auto'
+      }}
+    >
+      <Canvas
+        camera={{ position: [0, 1.1, 9], fov: 52 }}
+        dpr={isMobile ? [1, 1] : [1, 1.5]}
+        style={{ width: '100%', height: '100%', display: 'block' }}
+      >
         <OrbitCameraRig mouse={mouse} scroll={scroll} pulsing={collapsing || flash} />
-        <OrbitParticleLayer count={isMobile ? 25 : 60} accent={theme.accent} spread={20} speed={0.01} converge={collapsing || flash} />
-        <OrbitParticleLayer count={isMobile ? 20 : 50} accent={theme.accent} spread={9} speed={0.025} converge={collapsing || flash} />
-        <OrbitParticleLayer count={isMobile ? 12 : 30} accent={theme.accent} spread={4} speed={0.05} converge={collapsing || flash} />
+        {/* Moins de particules en light mode : plus visibles/denses sur fond clair */}
+        <OrbitParticleLayer count={isMobile ? 25 : isDark ? 60 : 40} accent={theme.accent} spread={20} speed={0.01} converge={collapsing || flash} />
+        <OrbitParticleLayer count={isMobile ? 20 : isDark ? 50 : 32} accent={theme.accent} spread={9} speed={0.025} converge={collapsing || flash} />
+        <OrbitParticleLayer count={isMobile ? 12 : isDark ? 30 : 20} accent={theme.accent} spread={4} speed={0.05} converge={collapsing || flash} />
         <SkillOrbitCore accent={theme.accent} pulsing={collapsing || flash} />
         {items.map((item, index) => (
           /* item.id est "group-rawId" => unique globalement, y compris
@@ -890,11 +938,12 @@ function SkillsOrbitCanvas({
             item={item}
             index={index}
             layout={layouts[index]}
-            accent={UNIVERSE[item.group].accent}
+            accent={universe[item.group].accent}
             hoveredId={hoveredId}
             setHoveredId={setHoveredId}
             collapsing={collapsing}
             ringCountFactor={ringCountFactor}
+            isDark={isDark}
           />
         ))}
       </Canvas>
@@ -905,13 +954,14 @@ function SkillsOrbitCanvas({
 /* ============================================================
    FALLBACK STATIQUE (prefers-reduced-motion)
    ============================================================ */
-function ReducedMotionSkillsFallback({ items }: { items: SkillItem[] }) {
+function ReducedMotionSkillsFallback({ items, isDark }: { items: SkillItem[]; isDark: boolean }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const universe = getUniverse(isDark);
 
   return (
     <div style={{ position: 'relative', zIndex: 2, padding: '20px 0 40px', display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
       {items.map((item) => {
-        const accent = UNIVERSE[item.group].accent;
+        const accent = universe[item.group].accent;
         const isHovered = hoveredId === item.id;
         return (
           <div
@@ -922,9 +972,9 @@ function ReducedMotionSkillsFallback({ items }: { items: SkillItem[] }) {
               width: 160,
               padding: '12px 14px',
               borderRadius: 12,
-              background: 'rgba(255,255,255,0.05)',
+              backgroundColor: 'var(--color-surface)',
               border: `1px solid ${isHovered ? accent : accent + '55'}`,
-              color: '#fff',
+              color: 'var(--color-text-main)',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
@@ -941,7 +991,7 @@ function ReducedMotionSkillsFallback({ items }: { items: SkillItem[] }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
               {isHovered ? (
-                <CircularLevel percentage={item.level} accent={accent} size={26} />
+                <CircularLevel percentage={item.level} accent={accent} size={26} isDark={isDark} />
               ) : (
                 <div style={{ fontSize: 10, color: accent }}>{item.level}%</div>
               )}
@@ -957,6 +1007,9 @@ function ReducedMotionSkillsFallback({ items }: { items: SkillItem[] }) {
    COMPOSANT PRINCIPAL
    ============================================================ */
 export default function SkillsContent() {
+  const { theme: appTheme } = useTheme();
+  const isDark = appTheme === 'dark';
+
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [displayedTab, setDisplayedTab] = useState<TabKey>('all');
   const [collapsing, setCollapsing] = useState(false);
@@ -1013,6 +1066,16 @@ export default function SkillsContent() {
       console.error('❌ [SkillsContent] Erreur lors du chargement des compétences', err);
     } finally {
       setLoading(false);
+      // ⚠️ FIX PRINCIPAL : AOS calcule les positions de déclenchement
+      // ("trigger offsets") au montage, AVANT que les données async
+      // n'arrivent. Comme les données changent la hauteur de la page,
+      // les offsets d'AOS deviennent obsolètes et certains blocs
+      // (comme la zone du canvas orbital) restent bloqués à
+      // opacity:0 pour toujours -> ils ne s'affichent jamais.
+      // On force donc un recalcul juste après le chargement.
+      window.requestAnimationFrame(() => {
+        AOS.refresh();
+      });
     }
   };
 
@@ -1026,9 +1089,10 @@ export default function SkillsContent() {
   const filteredTools = filterItems(tools);
 
   const totalCount = filteredFrameworks.length + filteredDatabases.length + filteredTools.length;
-  const theme = UNIVERSE[activeTab];
+  const universe = getUniverse(isDark);
+  const theme = universe[activeTab];
 
-const iconOf = (item: any) => getStorageUrl(item.icon);
+  const iconOf = (item: any) => getStorageUrl(item.icon);
   // Extraction du niveau en tenant compte du VRAI modèle de données :
   // - Framework  -> proficiency (pas "level")
   // - Database   -> level
@@ -1040,8 +1104,6 @@ const iconOf = (item: any) => getStorageUrl(item.icon);
   };
 
   // Badge : Framework -> category, Database -> type, Tool -> category
-  // (avant, les frameworks lisaient "type", un champ qui n'existe pas
-  // sur le modèle Framework -> le badge était toujours vide)
   const badgeFrom = (raw: any, group: SkillGroup) => {
     if (group === 'databases') return raw.type;
     return raw.category;
@@ -1071,6 +1133,15 @@ const iconOf = (item: any) => getStorageUrl(item.icon);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayedTab, filteredFrameworks, filteredDatabases, filteredTools]);
 
+  // Chaque fois que la liste de compétences affichée change (recherche,
+  // changement d'onglet), la hauteur de page peut bouger -> on redonne
+  // aussi un coup de refresh à AOS pour rester cohérent.
+  useEffect(() => {
+    if (!loading) {
+      window.requestAnimationFrame(() => AOS.refresh());
+    }
+  }, [loading, items3D.length]);
+
   const layouts = useOrbitLayout(items3D.length, isMobile);
   const ringCountFactor = layouts.length ? Math.min(1, new Set(layouts.map((l) => l.ring)).size / 3) : 0;
 
@@ -1087,67 +1158,61 @@ const iconOf = (item: any) => getStorageUrl(item.icon);
   };
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: '#020617', paddingTop: '80px', paddingBottom: '60px' }}>
+    <div
+      style={{
+        position: 'relative',
+        minHeight: '100vh',
+        backgroundColor: isDark ? '#020617' : 'var(--color-bg)',
+        paddingTop: '80px',
+        paddingBottom: '60px',
+        transition: 'background-color 0.3s ease'
+      }}
+    >
+      {/* Fond décoratif en arrière-plan (reste fixed, léger, ne gêne pas la lecture) */}
       {prefersReducedMotion ? (
         <StaticBackground accent={theme.accent} />
       ) : (
-        <LabBackground3D activeTab={activeTab} isMobile={isMobile} />
+        <LabBackground3D activeTab={activeTab} isMobile={isMobile} isDark={isDark} />
       )}
 
-      {!prefersReducedMotion && !loading && totalCount > 0 && (
-        <SkillsOrbitCanvas
-          theme={theme}
-          items={items3D}
-          layouts={layouts}
-          ringCountFactor={ringCountFactor}
-          hoveredId={hoveredId}
-          setHoveredId={setHoveredId}
-          collapsing={collapsing}
-          flash={flash}
-          isMobile={isMobile}
-          displayedTab={displayedTab}
-        />
-      )}
-      <OrbitPortalFlash active={flash} accent={theme.accent} />
-
-      <div className="container-fluid position-relative py-4 px-4 px-lg-5" style={{ zIndex: 2, color: '#ffffff' }}>
+      <div className="container-fluid position-relative py-4 px-4 px-lg-5" style={{ zIndex: 2, color: 'var(--color-text-main)' }}>
         <div className="row align-items-center mb-5 g-4" data-aos="fade-up">
           <div className="col-lg-7 text-start">
             <div
               className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: `1px solid ${theme.accent}55`, transition: 'border-color 0.4s ease' }}
+              style={{ backgroundColor: 'var(--color-surface)', border: `1px solid ${theme.accent}55`, transition: 'border-color 0.4s ease' }}
             >
               <MdCode style={{ color: theme.accent }} />
               <span className="small text-uppercase fw-semibold" style={{ color: theme.accent, letterSpacing: '2px' }}>
                 Laboratoire Technologique
               </span>
             </div>
-            <h2 className="fw-bold display-5 mb-3 text-white" style={{ letterSpacing: '-0.5px' }}>
+            <h2 className="fw-bold display-5 mb-3" style={{ color: 'var(--color-text-main)', letterSpacing: '-0.5px' }}>
               Mes <span style={{ color: theme.accent, transition: 'color 0.4s ease' }}>Compétences</span>
             </h2>
-            <p className="lead fs-6 mb-4" style={{ color: '#cbd5e1', maxWidth: '650px' }}>
+            <p className="lead fs-6 mb-4" style={{ color: 'var(--color-text-muted)', maxWidth: '650px' }}>
               Explorez les technologies, frameworks, bases de données et outils que j'utilise pour concevoir des applications web et mobiles performantes — organisés comme trois univers d'un même stack.
             </p>
 
             <div className="row g-3 mt-2" style={{ maxWidth: '680px' }}>
               <div className="col-sm-6" data-aos="fade-up" data-aos-delay="100">
-                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                   <div className="d-flex align-items-center gap-2 mb-2">
                     <MdLightbulb style={{ color: theme.accent }} className="fs-5" />
-                    <h6 className="fw-bold mb-0 text-white">Maîtrise & Évolution</h6>
+                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Maîtrise & Évolution</h6>
                   </div>
-                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
+                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
                     Des langages fondamentaux aux frameworks modernes évalués selon des niveaux d'expertise continus.
                   </p>
                 </div>
               </div>
               <div className="col-sm-6" data-aos="fade-up" data-aos-delay="200">
-                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div className="p-3 rounded-3 h-100" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                   <div className="d-flex align-items-center gap-2 mb-2">
-                    <MdRocket style={{ color: '#22c55e' }} className="fs-5" />
-                    <h6 className="fw-bold mb-0 text-white">DevOps & Outils</h6>
+                    <MdRocket style={{ color: isDark ? '#22c55e' : '#15803d' }} className="fs-5" />
+                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>DevOps & Outils</h6>
                   </div>
-                  <p className="small mb-0" style={{ color: '#94a3b8' }}>
+                  <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
                     Automatisation, conteneurisation et gestion de bases de données pour des environnements robustes.
                   </p>
                 </div>
@@ -1173,8 +1238,8 @@ const iconOf = (item: any) => getStorageUrl(item.icon);
                 <div
                   className="p-3 rounded-4 position-relative shadow-2xl"
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    backgroundColor: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
                     zIndex: 1,
                     width: '100%',
                     maxWidth: '460px',
@@ -1204,7 +1269,7 @@ const iconOf = (item: any) => getStorageUrl(item.icon);
           </div>
         </div>
 
-        <div className="row justify-content-center mb-5 g-3" data-aos="fade-up" data-aos-delay="100">
+        <div className="row justify-content-center mb-2 g-3" data-aos="fade-up" data-aos-delay="100">
           <div className="col-12 col-md-6 col-lg-5">
             <div
               className="input-group shadow-sm"
@@ -1212,27 +1277,27 @@ const iconOf = (item: any) => getStorageUrl(item.icon);
                 borderRadius: '16px',
                 overflow: 'hidden',
                 border: `1px solid ${theme.accent}55`,
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backgroundColor: 'var(--color-surface)',
                 transition: 'border-color 0.4s ease'
               }}
             >
-              <span className="input-group-text border-0 bg-transparent ps-3" style={{ color: '#94a3b8' }}>
+              <span className="input-group-text border-0 bg-transparent ps-3" style={{ color: 'var(--color-text-muted)' }}>
                 <MdSearch size={22} />
               </span>
               <input
                 type="text"
-                className="form-control shadow-none border-0 py-3 bg-transparent text-white"
+                className="form-control shadow-none border-0 py-3 bg-transparent"
                 placeholder="Rechercher une technologie..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ fontSize: '0.95rem', color: '#ffffff' }}
+                style={{ fontSize: '0.95rem', color: 'var(--color-text-main)' }}
               />
             </div>
           </div>
 
           <div className="col-12 col-md-6 col-lg-7 d-flex justify-content-center justify-content-md-start align-items-center gap-2 flex-wrap">
             {(['all', 'frameworks', 'databases', 'tools'] as TabKey[]).map((key) => {
-              const t = UNIVERSE[key];
+              const t = universe[key];
               const isActive = activeTab === key;
               const labelMap: Record<TabKey, string> = {
                 all: 'Tout voir',
@@ -1244,12 +1309,12 @@ const iconOf = (item: any) => getStorageUrl(item.icon);
                 <button
                   key={key}
                   onClick={() => changeTab(key)}
-                  className="btn fw-bold px-4 py-2 shadow-sm"
+                  className="btn fw-bold px-4 py-0 shadow-sm"
                   style={{
-                    backgroundColor: isActive ? t.accent : 'rgba(255, 255, 255, 0.08)',
-                    color: isActive ? '#020617' : '#e2e8f0',
+                    backgroundColor: isActive ? t.accent : 'var(--color-surface)',
+                    color: isActive ? (isDark ? '#020617' : '#ffffff') : 'var(--color-text-main)',
                     borderRadius: '12px',
-                    border: `1px solid ${isActive ? t.accent : 'rgba(255, 255, 255, 0.15)'}`,
+                    border: `1px solid ${isActive ? t.accent : 'var(--color-border)'}`,
                     transition: 'all 0.3s ease'
                   }}
                 >
@@ -1260,22 +1325,59 @@ const iconOf = (item: any) => getStorageUrl(item.icon);
           </div>
         </div>
 
+        {/*
+          ============================================================
+          ZONE DES COMPÉTENCES — dans le flux normal de la page,
+          en dessous du texte et de la barre de recherche.
+          ⚠️ PAS de data-aos ici : c'est ce qui bloquait
+          l'affichage (voir le fix dans fetchAllData / useEffect
+          plus haut). Le fade-in est géré directement en CSS pour
+          rester fiable, sans dépendre du recalcul de scroll d'AOS.
+          ============================================================
+        */}
         {loading ? (
           <div className="text-center py-5">
             <div className="spinner-border" role="status" style={{ width: '3rem', height: '3rem', color: theme.accent }}></div>
-            <p className="mt-3 fw-semibold text-white">Chargement de vos compétences...</p>
+            <p className="mt-3 fw-semibold" style={{ color: 'var(--color-text-main)' }}>Chargement de vos compétences...</p>
           </div>
         ) : totalCount === 0 ? (
           <div
             className="text-center py-5 card border-0 shadow-sm p-5"
-            style={{ borderRadius: '20px', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+            style={{ borderRadius: '20px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
           >
-            <h4 className="fw-semibold text-white">Aucun résultat trouvé pour votre recherche.</h4>
+            <h4 className="fw-semibold" style={{ color: 'var(--color-text-main)' }}>Aucun résultat trouvé pour votre recherche.</h4>
           </div>
         ) : prefersReducedMotion ? (
-          <ReducedMotionSkillsFallback items={items3D} />
+          <ReducedMotionSkillsFallback items={items3D} isDark={isDark} />
         ) : (
-          <div style={{ minHeight: '75vh', position: 'relative' }} data-aos="fade-up" data-aos-delay="150" />
+          <div
+            style={{
+              position: 'relative',
+              opacity: 1,
+              animation: 'skillsFadeIn 0.6s ease-out'
+            }}
+          >
+            <style>{`
+              @keyframes skillsFadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+            `}</style>
+            <SkillsOrbitCanvas
+              theme={theme}
+              items={items3D}
+              layouts={layouts}
+              ringCountFactor={ringCountFactor}
+              hoveredId={hoveredId}
+              setHoveredId={setHoveredId}
+              collapsing={collapsing}
+              flash={flash}
+              isMobile={isMobile}
+              displayedTab={displayedTab}
+              isDark={isDark}
+            />
+            <OrbitPortalFlash active={flash} accent={theme.accent} />
+          </div>
         )}
       </div>
     </div>

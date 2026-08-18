@@ -5,7 +5,7 @@ import { FaGithub, FaLinkedin, FaWhatsapp, FaEnvelope } from 'react-icons/fa';
 //@ts-ignore
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-import logo from '../assets/Logo-app.png';
+import logo from '../assets/Logo-app-v2.png';
 
 export default function Footer() {
   useEffect(() => {
@@ -17,7 +17,15 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="pt-4 pb-3 text-light" style={{ backgroundColor: '#1e293b', borderTop: '1px solid #334155' }}>
+    <footer 
+      className="pt-4 pb-3" 
+      style={{ 
+        backgroundColor: 'var(--color-surface)', 
+        borderTop: '1px solid var(--color-border)',
+        color: 'var(--color-text-main)',
+        transition: 'background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease'
+      }}
+    >
       <div className="container">
         <div className="row g-4 justify-content-between align-items-center text-center text-md-start">
           
@@ -30,35 +38,35 @@ export default function Footer() {
                 style={{ height: '45px', width: 'auto', objectFit: 'contain' }} 
                 className="img-fluid me-2"
               />
-              <span className="fw-bold fs-5" style={{ color: '#f8fafc' }}>PORTFOLIO</span>
+              <span className="fw-bold fs-5" style={{ color: 'var(--color-text-main)' }}>PORTFOLIO</span>
             </div>
           </div>
 
           {/* Colonne 2 : Contact Direct */}
           <div className="col-lg-4 col-md-6 d-flex flex-column align-items-center align-items-md-start" data-aos="fade-up" data-aos-delay="300">
-            <h5 className="text-light fw-bold mb-2 fs-6" style={{ borderLeft: '3px solid #22c55e', paddingLeft: '10px' }}>
+            <h5 className="fw-bold mb-2 fs-6" style={{ borderLeft: '3px solid var(--color-success)', paddingLeft: '10px', color: 'var(--color-text-main)' }}>
               Contact Direct
             </h5>
             <div className="d-flex flex-column gap-2 align-items-center align-items-md-start">
-              <div className="d-flex align-items-center gap-2 text-light small">
-                <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '26px', height: '26px', backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' }}>
+              <div className="d-flex align-items-center gap-2 small" style={{ color: 'var(--color-text-muted)' }}>
+                <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '26px', height: '26px', backgroundColor: 'var(--color-success-bg)', color: 'var(--color-success)' }}>
                   <FaWhatsapp size={13} />
                 </div>
-                <span>+237 658 78 84 48</span>
+                <span style={{ color: 'var(--color-text-main)' }}>+237 658 78 84 48</span>
               </div>
               
-              <div className="d-flex align-items-center gap-2 text-light small">
-                <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '26px', height: '26px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
+              <div className="d-flex align-items-center gap-2 small" style={{ color: 'var(--color-text-muted)' }}>
+                <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: '26px', height: '26px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: 'var(--color-primary)' }}>
                   <FaEnvelope size={11} />
                 </div>
-                <span style={{ fontSize: '0.85rem' }}>kakabichristian@gmail.com</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-main)' }}>kakabichristian@gmail.com</span>
               </div>
             </div>
           </div>
 
           {/* Colonne 3 : Réseaux (Compact) */}
           <div className="col-lg-3 col-md-6 d-flex flex-column align-items-center align-items-md-start" data-aos="fade-up" data-aos-delay="400">
-            <h5 className="text-light fw-bold mb-2 fs-6" style={{ borderLeft: '3px solid #38bdf8', paddingLeft: '10px' }}>
+            <h5 className="fw-bold mb-2 fs-6" style={{ borderLeft: '3px solid var(--color-primary)', paddingLeft: '10px', color: 'var(--color-text-main)' }}>
               Réseaux
             </h5>
             <div className="d-flex align-items-center justify-content-center justify-content-md-start gap-2">
@@ -67,7 +75,7 @@ export default function Footer() {
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
-                style={{ width: '36px', height: '36px', backgroundColor: '#0f172a', color: '#38bdf8', border: '1px solid #334155' }}
+                style={{ width: '36px', height: '36px', backgroundColor: 'var(--color-bg)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}
                 title="GitHub"
               >
                 <FaGithub size={16} />
@@ -77,7 +85,7 @@ export default function Footer() {
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
-                style={{ width: '36px', height: '36px', backgroundColor: '#0f172a', color: '#38bdf8', border: '1px solid #334155' }}
+                style={{ width: '36px', height: '36px', backgroundColor: 'var(--color-bg)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}
                 title="LinkedIn"
               >
                 <FaLinkedin size={16} />
@@ -87,7 +95,7 @@ export default function Footer() {
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
-                style={{ width: '36px', height: '36px', backgroundColor: '#0f172a', color: '#22c55e', border: '1px solid #334155' }}
+                style={{ width: '36px', height: '36px', backgroundColor: 'var(--color-bg)', color: 'var(--color-success)', border: '1px solid var(--color-border)' }}
                 title="WhatsApp"
               >
                 <FaWhatsapp size={16} />
@@ -98,10 +106,10 @@ export default function Footer() {
         </div>
 
         {/* Ligne de séparation et Copyright */}
-        <hr className="my-3" style={{ borderColor: '#334155' }} />
+        <hr className="my-3" style={{ borderColor: 'var(--color-border)' }} />
         <div className="text-center">
-          <p className="text-light small mb-0">
-            &copy; {new Date().getFullYear()} <span style={{ color: '#38bdf8' }}>Kakabi Christian</span>. Tous droits réservés.
+          <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
+            &copy; {new Date().getFullYear()} <span style={{ color: 'var(--color-primary)' }}>Kakabi Christian</span>. Tous droits réservés.
           </p>
         </div>
       </div>
