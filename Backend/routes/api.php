@@ -10,55 +10,99 @@ use App\Http\Controllers\Api\TranslationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Routes publiques d'authentification
+// ============================================================
+// ROUTES PUBLIQUES D'AUTHENTIFICATION
+// ============================================================
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Routes publiques pour lister ou afficher les ressources
+// ============================================================
+// ROUTES PUBLIQUES - FRAMEWORKS
+// ============================================================
+
 Route::get('/frameworks', [FrameworkController::class, 'index']);
 Route::get('/frameworks/{framework}', [FrameworkController::class, 'show']);
+
+// ============================================================
+// ROUTES PUBLIQUES - DATABASES
+// ============================================================
 
 Route::get('/databases', [DatabaseController::class, 'index']);
 Route::get('/databases/{database}', [DatabaseController::class, 'show']);
 
+// ============================================================
+// ROUTES PUBLIQUES - TOOLS
+// ============================================================
+
 Route::get('/tools', [ToolController::class, 'index']);
 Route::get('/tools/{tool}', [ToolController::class, 'show']);
 
-// Routes publiques pour les projets
+// ============================================================
+// ROUTES PUBLIQUES - PROJECTS
+// ============================================================
+
 Route::get('/projects', [ProjectController::class, 'index']);
 Route::get('/projects/{project}', [ProjectController::class, 'show']);
 
-// Route publique pour envoyer un message depuis le formulaire de contact
+// ============================================================
+// ROUTE PUBLIQUE - CONTACT
+// ============================================================
+
 Route::post('/contact', [ContactController::class, 'store']);
 
 // ============================================================
-// ROUTE PUBLIQUE DE TRADUCTION DEEPL
+// ROUTE PUBLIQUE - TRADUCTION DEEPL
 // ============================================================
 
 Route::post('/translate', [TranslationController::class, 'store']);
 
-// Routes protégées par Sanctum
-Route::middleware('auth:sanctum')->group(function () {
+// ============================================================
+// ROUTES ADMINISTRATEUR
+// Authentification Sanctum + vérification du rôle admin
+// ============================================================
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+
+    // --------------------------------------------------------
+    // UTILISATEUR CONNECTÉ
+    // --------------------------------------------------------
 
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
+    // --------------------------------------------------------
+    // DÉCONNEXION
+    // --------------------------------------------------------
+
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Gestion complète des Frameworks
+    // ========================================================
+    // GESTION DES FRAMEWORKS
+    // ========================================================
+
     Route::apiResource('frameworks', FrameworkController::class)
         ->except(['index', 'show']);
 
-    // Gestion complète des Databases
+    // ========================================================
+    // GESTION DES DATABASES
+    // ========================================================
+
     Route::apiResource('databases', DatabaseController::class)
         ->except(['index', 'show']);
 
-    // Gestion complète des Tools
+    // ========================================================
+    // GESTION DES TOOLS
+    // ========================================================
+
     Route::apiResource('tools', ToolController::class)
         ->except(['index', 'show']);
 
-    // Gestion complète des Projects
+    // ========================================================
+    // GESTION DES PROJECTS
+    // ========================================================
+
     Route::apiResource('projects', ProjectController::class)
         ->except(['index', 'show']);
 
@@ -67,8 +111,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // ========================================================
 
     Route::get('/admin/contacts', [ContactController::class, 'index']);
-    Route::get('/admin/contacts/count/unread', [ContactController::class, 'countUnread']);
-    Route::get('/admin/contacts/{id}', [ContactController::class, 'show']);
-    Route::post('/admin/contacts/{id}/reply', [ContactController::class, 'reply']);
-    Route::delete('/admin/contacts/{id}', [ContactController::class, 'destroy']);
+
+    Route::get(
+        '/admin/contacts/count/unread',
+        [ContactController::class, 'countUnread']
+    );
+
+    Route::get(
+        '/admin/contacts/{id}',
+        [ContactController::class, 'show']
+    );
+
+    Route::post(
+        '/admin/contacts/{id}/reply',
+        [ContactController::class, 'reply']
+    );
+
+    Route::delete(
+        '/admin/contacts/{id}',
+        [ContactController::class, 'destroy']
+    );
 });

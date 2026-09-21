@@ -1,5 +1,8 @@
+```php
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,10 +16,41 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+
+        // Middleware administrateur
+        $middleware->alias([
+            'admin' => AdminMiddleware::class,
+        ]);
+
+        // Ne pas rediriger les requêtes API vers la route "login"
+        $middleware->redirectGuestsTo(function (Request $request) {
+
+            if ($request->is('api/*')) {
+                return null;
+            }
+
+            return route('login');
+        });
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+
+        // Les requêtes API doivent retourner du JSON
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
-    })->create();
+
+        // Gestion des utilisateurs non authentifiés
+        $exceptions->render(function (
+            AuthenticationException $e,
+            Request $request
+        ) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Non authentifié. Un token Bearer est requis.',
+                ], 401);
+            }
+        });
+
+    })
+    ->create();
