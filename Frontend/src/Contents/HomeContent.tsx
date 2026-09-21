@@ -371,12 +371,7 @@ export default function HomeContent() {
             {/* Colonne de gauche : Texte et Présentation */}
             <div className="col-lg-7" data-aos="fade-right">
               <div className="mb-3">
-                <span
-                  className="badge px-3 py-2 rounded-pill fw-semibold"
-                  style={{ backgroundColor: 'var(--color-success-bg)', color: 'var(--color-success)' }}
-                >
-                  👋 Bienvenue sur mon portfolio
-                </span>
+                
               </div>
               
               {/* Le nom s'affiche d'abord en haut (statique) */}

@@ -490,15 +490,7 @@ export default function ProjectsContent() {
         {/* En-tête — texte aligné à gauche, photo à droite (comme Home / Skills / Contact) */}
         <div className="row align-items-center mb-5 g-4" data-aos="fade-up">
           <div className="col-lg-7 text-start">
-            <div
-              className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-3"
-              style={{ backgroundColor: cardBg, border: `1px solid ${ACCENT}55` }}
-            >
-              <MdFolder style={{ color: ACCENT }} />
-              <span className="small text-uppercase fw-semibold" style={{ color: ACCENT, letterSpacing: '2px' }}>
-                Portfolio
-              </span>
-            </div>
+            
             <h2 className="fw-bold display-5 mb-3" style={{ color: 'var(--color-text-main)', letterSpacing: '-0.5px' }}>
               Mes <span style={{ color: ACCENT }}>Projets</span>
             </h2>
