@@ -55,7 +55,6 @@ api.interceptors.response.use(
                 // Nettoyage au cas où des balises markdown ou des espaces se glisseraient
                 const cleaned = response.data.replace(/```php|```/g, '').trim();
                 response.data = JSON.parse(cleaned);
-                console.warn("⚠️ [AXIOS] La réponse du serveur était une String, convertie avec succès en Objet JSON.");
             } catch (e) {
                 console.error("❌ [AXIOS] Impossible de parser la réponse brute en JSON :", response.data);
             }
