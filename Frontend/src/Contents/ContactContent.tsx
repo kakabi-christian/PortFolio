@@ -532,13 +532,13 @@ export default function ContactContent() {
           <div className="col-md-4" data-aos="fade-up" data-aos-delay="100">
             <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: cardBg, border: cardBorder }}>
               <FaMapMarkerAlt className="fs-4 mb-2" style={{ color: RED }} />
-              <p className="small mb-0" style={{ color: 'var(--color-text-main)' }}>Village-Elf,  /Douala - Cameroun</p>
+              <p className="small mb-0" style={{ color: 'var(--color-text-main)' }}>Limoges, France</p>
             </div>
           </div>
           <div className="col-md-4" data-aos="fade-up" data-aos-delay="200">
             <div className="p-3 rounded-3 h-100 text-center" style={{ backgroundColor: cardBg, border: cardBorder }}>
               <FaPhoneAlt className="fs-4 mb-2" style={{ color: GREEN }} />
-              <p className="small mb-0" style={{ color: 'var(--color-text-main)' }}>+237 658 78 84 48</p>
+              <p className="small mb-0" style={{ color: 'var(--color-text-main)' }}>+33 758 772 936</p>
             </div>
           </div>
           <div className="col-md-4" data-aos="fade-up" data-aos-delay="300">
