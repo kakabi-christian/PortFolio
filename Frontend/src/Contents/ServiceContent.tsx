@@ -6,8 +6,6 @@ import {
   MdImage,
   MdMiscellaneousServices,
   MdRocket,
-  MdEuro,
-  MdSchedule,
   MdForum,
   MdDescription,
   MdCode,
@@ -51,8 +49,8 @@ const PROCESS_STEPS = [
   },
   {
     icon: MdDescription,
-    title: 'Devis',
-    text: "Je vous envoie une proposition claire : ce qui sera réalisé, le prix et le délai estimé. Le prix affiché sur la page est un minimum, le devis donne le montant exact."
+    title: 'Proposition',
+    text: "Je vous envoie une proposition claire : ce qui sera réalisé et la façon dont nous allons procéder, pour que vous sachiez exactement à quoi vous attendre."
   },
   {
     icon: MdCode,
@@ -86,16 +84,8 @@ const STRENGTHS = [
 
 const FAQ_ITEMS = [
   {
-    question: "Le prix affiché est-il le prix final ?",
-    answer: "Non, c'est un prix minimum à titre indicatif. Le tarif final dépend de la taille du projet, des fonctionnalités demandées et de la complexité. Vous recevez un devis précis après notre échange."
-  },
-  {
-    question: "Pourquoi la durée est-elle une durée « minimum » ?",
-    answer: "Chaque projet est différent. La durée indiquée correspond à un projet simple. Plus il y a de pages, de fonctionnalités ou de contenus à intégrer, plus le délai augmente. Je vous donne un délai adapté dans le devis."
-  },
-  {
-    question: "Comment demander un devis ?",
-    answer: "Cliquez sur « Demander un devis » sur le service qui vous intéresse, ou rendez-vous sur la page Contact. Décrivez votre projet, votre budget et vos délais, et je vous réponds rapidement."
+    question: "Comment me contacter pour un projet ?",
+    answer: "Cliquez sur « Me contacter » sur le service qui vous intéresse, ou rendez-vous sur la page Contact. Décrivez votre projet et vos délais souhaités, et je vous réponds rapidement."
   },
   {
     question: "Mon projet ne correspond à aucun service de la liste, que faire ?",
@@ -449,16 +439,19 @@ function ServiceCard({
             />
           </div>
 
-          <div className="p-4 d-flex flex-column" style={{ minHeight: '220px' }}>
+          <div className="p-4 d-flex flex-column" style={{ minHeight: '200px' }}>
             <h5 className="fw-bold mb-2" style={{ color: 'var(--color-text-main)' }}>{service.title}</h5>
 
             <p
               className="small mb-1"
+              lang="fr"
               style={
                 expanded
-                  ? { color: 'var(--color-text-muted)' }
+                  ? { color: 'var(--color-text-muted)', textAlign: 'justify', hyphens: 'auto' }
                   : {
                       color: 'var(--color-text-muted)',
+                      textAlign: 'justify',
+                      hyphens: 'auto',
                       display: '-webkit-box',
                       WebkitLineClamp: 3,
                       WebkitBoxOrient: 'vertical',
@@ -481,22 +474,6 @@ function ServiceCard({
             )}
             {!isLong && <div className="mb-3" />}
 
-            {/* Prix et durée minimum */}
-            <div className="d-flex flex-wrap gap-2 mb-3">
-              <span
-                className="d-inline-flex align-items-center gap-1 px-3 py-2 fw-semibold small"
-                style={{ backgroundColor: 'var(--color-surface-2)', color: accent, border: `1px solid ${accent}55`, borderRadius: '10px' }}
-              >
-                <MdEuro size={16} /> À partir de {Number(service.min_price).toLocaleString('fr-FR')} €
-              </span>
-              <span
-                className="d-inline-flex align-items-center gap-1 px-3 py-2 fw-semibold small"
-                style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)', borderRadius: '10px' }}
-              >
-                <MdSchedule size={16} /> {service.min_duration}
-              </span>
-            </div>
-
             <div className="mt-auto pt-2">
               <Link
                 to="/contact"
@@ -508,7 +485,7 @@ function ServiceCard({
                   border: 'none'
                 }}
               >
-                Demander un devis <FaArrowRight size={12} />
+                Me contacter <FaArrowRight size={12} />
               </Link>
             </div>
           </div>
@@ -600,7 +577,7 @@ export default function ServiceContent() {
               Mes <span style={{ color: ACCENT }}>Services</span>
             </h2>
             <p className="lead fs-6 mb-3" style={{ color: 'var(--color-text-muted)', maxWidth: '650px' }}>
-              Sites web, applications web et solutions sur mesure : découvrez ce que je peux réaliser pour vous, avec un prix et une durée minimum indicatifs.
+              Sites web, applications web et solutions sur mesure : découvrez ce que je peux réaliser pour vous.
             </p>
             <p className="fs-6 mb-4" style={{ color: 'var(--color-text-muted)', maxWidth: '650px' }}>
               Que vous ayez besoin d'une vitrine pour présenter votre activité, d'une application pour gérer vos données ou d'un outil adapté à votre métier, je vous accompagne de l'idée jusqu'à la mise en ligne. Parcourez les services ci-dessous, puis contactez-moi pour en discuter.
@@ -610,11 +587,11 @@ export default function ServiceContent() {
               <div className="col-sm-6" data-aos="fade-up" data-aos-delay="100">
                 <div className="p-3 rounded-3 h-100" style={{ backgroundColor: cardBg, border: cardBorder }}>
                   <div className="d-flex align-items-center gap-2 mb-2">
-                    <MdEuro style={{ color: ACCENT }} className="fs-5" />
-                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Tarifs indicatifs</h6>
+                    <MdCode style={{ color: ACCENT }} className="fs-5" />
+                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Solutions sur mesure</h6>
                   </div>
                   <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
-                    Le prix affiché est un minimum. Le tarif final dépend de votre projet et de vos besoins.
+                    Chaque projet est pensé selon votre activité, vos besoins et vos objectifs.
                   </p>
                 </div>
               </div>
@@ -622,7 +599,7 @@ export default function ServiceContent() {
                 <div className="p-3 rounded-3 h-100" style={{ backgroundColor: cardBg, border: cardBorder }}>
                   <div className="d-flex align-items-center gap-2 mb-2">
                     <MdRocket style={{ color: GREEN }} className="fs-5" />
-                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Devis personnalisé</h6>
+                    <h6 className="fw-bold mb-0" style={{ color: 'var(--color-text-main)' }}>Échange personnalisé</h6>
                   </div>
                   <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>
                     Décrivez-moi votre projet et je reviens vers vous avec une proposition adaptée.
@@ -719,7 +696,7 @@ export default function ServiceContent() {
             Les services <span style={{ color: ACCENT }}>disponibles</span>
           </h3>
           <p className="small mb-0 mx-auto" style={{ color: 'var(--color-text-muted)', maxWidth: '600px' }}>
-            Chaque carte indique le prix de départ et la durée minimum. Cliquez sur « Demander un devis » pour obtenir une proposition adaptée à votre projet.
+            Cliquez sur « Me contacter » sur le service qui vous intéresse pour obtenir une proposition adaptée à votre projet.
           </p>
         </div>
 
@@ -883,7 +860,7 @@ export default function ServiceContent() {
             Un projet en tête ? <span style={{ color: ACCENT }}>Parlons-en.</span>
           </h3>
           <p className="small mb-4 mx-auto" style={{ color: 'var(--color-text-muted)', maxWidth: '560px' }}>
-            Expliquez-moi votre besoin en quelques lignes, même si l'idée n'est pas encore tout à fait claire. Je vous répondrai avec des conseils et une estimation.
+            Expliquez-moi votre besoin en quelques lignes, même si l'idée n'est pas encore tout à fait claire. Je vous répondrai avec des conseils adaptés à votre projet.
           </p>
           <div className="d-flex flex-wrap justify-content-center gap-3">
             <Link
