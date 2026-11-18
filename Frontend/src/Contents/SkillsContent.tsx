@@ -20,7 +20,7 @@ import {
   useTransform,
   useSpring
 } from 'framer-motion';
-import photo1 from '../assets/Skills.png';
+import photo1 from '../assets/skillsHand.png';
 
 import { toolService } from '../Services/ToolService';
 import { frameworkService } from '../Services/FrameworkService';

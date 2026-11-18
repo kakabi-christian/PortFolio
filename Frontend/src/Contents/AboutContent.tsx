@@ -289,6 +289,7 @@ function AboutBackground3D({
 export default function AboutContent() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const isMobile = useIsMobile();
 
   // Accents recalculés selon le thème (contraste correct sur fond clair)
   const ACCENT = isDark ? "#38bdf8" : "#0284c7";
@@ -312,6 +313,59 @@ export default function AboutContent() {
     ? "0 8px 32px rgba(0,0,0,0.3)"
     : "0 8px 24px rgba(15, 23, 42, 0.08)";
 
+  // Étapes du parcours académique (affichées sur la frise verticale).
+  // Pour ajouter une étape, ajoute simplement un objet à ce tableau.
+  const academicSteps: Array<{
+    period: string;
+    title: string;
+    place: string;
+    color: string;
+    current?: boolean;
+    content: React.ReactNode;
+  }> = [
+    {
+      period: "2023 – 2024 (Première année)",
+      title: "Institut Universitaire de la Côte (IUC)",
+      place: "Logbessou, Douala — Technologie de l'Informatique (TI)",
+      color: GREEN,
+      content: <>Réorientation réussie vers le numérique.</>,
+    },
+    {
+      period: "2024 – 2025 (Deuxième année)",
+      title:
+        "IUC — Programmation et Développement d'Applications Mobiles (PAM)",
+      place: "Logbessou, Douala",
+      color: GREEN,
+      content: (
+        <>
+          Obtention du{" "}
+          <strong style={{ color: "var(--color-text-main)" }}>
+            Diplôme d'Études Collégiales (DEC)
+          </strong>{" "}
+          attestant de compétences avancées en programmation et technologies
+          mobiles.
+        </>
+      ),
+    },
+    {
+      period: "2025 – 2026 (Troisième année – En cours)",
+      title:
+        "IUC — Concepteur Développeur Web Full-Stack (CDWFS) & Perspective Internationale",
+      place: "Logbessou, Douala",
+      color: ACCENT,
+      current: true,
+      content: (
+        <>
+          Maîtrise quotidienne de la stack{" "}
+          <strong style={{ color: "var(--color-text-main)" }}>
+            Laravel & React
+          </strong>
+          , conception UI/UX sur Figma.
+        </>
+      ),
+    },
+  ];
+
   useEffect(() => {
     AOS.init({
       duration: 1000,
@@ -330,6 +384,96 @@ export default function AboutContent() {
         transition: "background-color 0.3s ease",
       }}
     >
+      {/* Styles de la frise verticale du parcours académique */}
+      <style>{`
+        .tl-wrap {
+          position: relative;
+          padding: 8px 0;
+        }
+        .tl-wrap::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 20px;
+          width: 2px;
+          border-radius: 2px;
+          background: linear-gradient(to bottom, ${GREEN}, ${ACCENT});
+          opacity: 0.55;
+        }
+        .tl-item {
+          position: relative;
+          padding-left: 56px;
+          margin-bottom: 32px;
+        }
+        .tl-item:last-child {
+          margin-bottom: 0;
+        }
+        .tl-item::after {
+          content: "";
+          position: absolute;
+          top: 32px;
+          left: 32px;
+          width: 24px;
+          height: 2px;
+          background: var(--tl-color);
+          opacity: 0.4;
+        }
+        .tl-dot {
+          position: absolute;
+          top: 22px;
+          left: 10px;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: var(--tl-color);
+          border: 4px solid ${insetBg};
+          box-shadow: 0 0 0 2px var(--tl-color), 0 0 14px var(--tl-color);
+          z-index: 2;
+        }
+        .tl-dot.current {
+          animation: tlPulse 2s infinite;
+        }
+        @keyframes tlPulse {
+          0%   { box-shadow: 0 0 0 2px var(--tl-color), 0 0 0 0 var(--tl-color); }
+          70%  { box-shadow: 0 0 0 2px var(--tl-color), 0 0 0 14px transparent; }
+          100% { box-shadow: 0 0 0 2px var(--tl-color), 0 0 0 0 transparent; }
+        }
+        @media (min-width: 768px) {
+          .tl-wrap::before {
+            left: 50%;
+            transform: translateX(-50%);
+          }
+          .tl-item {
+            width: 50%;
+            padding-left: 0;
+            padding-right: 48px;
+          }
+          .tl-item.right {
+            margin-left: 50%;
+            padding-right: 0;
+            padding-left: 48px;
+          }
+          .tl-item::after {
+            left: auto;
+            right: 0;
+            width: 48px;
+          }
+          .tl-item.right::after {
+            right: auto;
+            left: 0;
+          }
+          .tl-dot {
+            left: auto;
+            right: -11px;
+          }
+          .tl-item.right .tl-dot {
+            right: auto;
+            left: -11px;
+          }
+        }
+      `}</style>
+
       {/* Fond 3D Interactif Three.js unifié */}
       <AboutBackground3D accent={ACCENT} green={GREEN} isDark={isDark} />
 
@@ -522,7 +666,7 @@ export default function AboutContent() {
           </div>
         </div>
 
-        {/* Section 2 : Parcours Académique Détaillé */}
+        {/* Section 2 : Parcours Académique — frise verticale */}
         <div className="mb-5" data-aos="fade-up" data-aos-delay="300">
           <div
             className="p-4 p-lg-5 rounded-4 shadow-2xl"
@@ -543,135 +687,75 @@ export default function AboutContent() {
               </div>
             </div>
 
-            <div className="row g-4">
-              {/* Étape 1 */}
-              <div className="col-md-6" data-aos="fade-up" data-aos-delay="350">
-                <div
-                  className="p-4 rounded-3 h-100 shadow-sm"
-                  style={{
-                    backgroundColor: insetBg,
-                    border: "1px solid var(--color-border)",
-                  }}
-                >
-                  <span
-                    className="badge mb-2 px-2 py-1"
-                    style={{
-                      backgroundColor: "var(--color-surface-2)",
-                      color: "var(--color-text-muted)",
-                    }}
-                  >
-                    2023 – 2024 (Première année)
-                  </span>
-                  <h4
-                    className="fw-bold fs-6 mb-1"
-                    style={{ color: "var(--color-text-main)" }}
-                  >
-                    Institut Universitaire de la Côte (IUC)
-                  </h4>
-                  <p
-                    className="small mb-2 fw-semibold"
-                    style={{ color: GREEN }}
-                  >
-                    Logbessou, Douala — Technologie de l'Informatique (TI)
-                  </p>
-                  <p
-                    className="small mb-0"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    Réorientation réussie vers le numérique.
-                  </p>
-                </div>
-              </div>
+            <div className="tl-wrap">
+              {academicSteps.map((step, i) => {
+                const isRight = i % 2 === 1;
+                const aosType = isMobile
+                  ? "fade-up"
+                  : isRight
+                    ? "fade-left"
+                    : "fade-right";
 
-              {/* Étape 2 */}
-              <div className="col-md-6" data-aos="fade-up" data-aos-delay="400">
-                <div
-                  className="p-4 rounded-3 h-100 shadow-sm"
-                  style={{
-                    backgroundColor: insetBg,
-                    border: "1px solid var(--color-border)",
-                  }}
-                >
-                  <span
-                    className="badge mb-2 px-2 py-1"
-                    style={{
-                      backgroundColor: "var(--color-surface-2)",
-                      color: "var(--color-text-muted)",
-                    }}
+                return (
+                  <div
+                    key={step.period}
+                    className={`tl-item ${isRight ? "right" : ""}`}
+                    style={{ ["--tl-color" as any]: step.color }}
+                    data-aos={aosType}
+                    data-aos-delay={350 + i * 100}
                   >
-                    2024 – 2025 (Deuxième année)
-                  </span>
-                  <h4
-                    className="fw-bold fs-6 mb-1"
-                    style={{ color: "var(--color-text-main)" }}
-                  >
-                    IUC — Programmation et Développement d'Applications Mobiles
-                    (PAM)
-                  </h4>
-                  <p
-                    className="small mb-2 fw-semibold"
-                    style={{ color: GREEN }}
-                  >
-                    Logbessou, Douala
-                  </p>
-                  <p
-                    className="small mb-0"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    Obtention du{" "}
-                    <strong style={{ color: "var(--color-text-main)" }}>
-                      Diplôme d'Études Collégiales (DEC)
-                    </strong>{" "}
-                    attestant de compétences avancées en programmation et
-                    technologies mobiles.
-                  </p>
-                </div>
-              </div>
+                    <span
+                      className={`tl-dot ${step.current ? "current" : ""}`}
+                    ></span>
 
-              {/* Étape 3 */}
-              <div className="col-12" data-aos="fade-up" data-aos-delay="450">
-                <div
-                  className="p-4 rounded-3 shadow-sm"
-                  style={{
-                    backgroundColor: insetBg,
-                    border: `1px solid ${ACCENT}`,
-                  }}
-                >
-                  <span
-                    className="badge mb-2 px-3 py-1"
-                    style={{
-                      backgroundColor: ACCENT,
-                      color: "#020617",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    2025 – 2026 (Troisième année – En cours)
-                  </span>
-                  <h4
-                    className="fw-bold fs-6 mb-1"
-                    style={{ color: "var(--color-text-main)" }}
-                  >
-                    IUC — Concepteur Développeur Web Full-Stack (CDWFS) &
-                    Perspective Internationale
-                  </h4>
-                  <p
-                    className="small mb-2 fw-semibold"
-                    style={{ color: ACCENT }}
-                  >
-                    Logbessou, Douala
-                  </p>
-                  <p
-                    className="small mb-0"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    Maîtrise quotidienne de la stack{" "}
-                    <strong style={{ color: "var(--color-text-main)" }}>
-                      Laravel & React
-                    </strong>
-                    , conception UI/UX sur Figma.
-                  </p>
-                </div>
-              </div>
+                    <div
+                      className="p-4 rounded-3 shadow-sm"
+                      style={{
+                        backgroundColor: insetBg,
+                        border: step.current
+                          ? `1px solid ${ACCENT}`
+                          : "1px solid var(--color-border)",
+                      }}
+                    >
+                      <span
+                        className="badge mb-2 px-3 py-1"
+                        style={
+                          step.current
+                            ? {
+                                backgroundColor: ACCENT,
+                                color: "#020617",
+                                fontWeight: "bold",
+                              }
+                            : {
+                                backgroundColor: "var(--color-surface-2)",
+                                color: "var(--color-text-muted)",
+                              }
+                        }
+                      >
+                        {step.period}
+                      </span>
+                      <h4
+                        className="fw-bold fs-6 mb-1"
+                        style={{ color: "var(--color-text-main)" }}
+                      >
+                        {step.title}
+                      </h4>
+                      <p
+                        className="small mb-2 fw-semibold"
+                        style={{ color: step.color }}
+                      >
+                        {step.place}
+                      </p>
+                      <p
+                        className="small mb-0"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
+                        {step.content}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

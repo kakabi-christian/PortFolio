@@ -11,7 +11,8 @@ import {
   MdLayers,
   MdBuild,
   MdFolder,
-  MdContacts
+  MdContacts,
+  MdMiscellaneousServices
 } from "react-icons/md";
 import { authService } from "../../Services/AuthService";
 import { ContactService } from "../../Services/ContactService";
@@ -207,6 +208,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               <div className="d-flex align-items-center">
                 <MdFolder className={isCollapsed ? "" : "me-2"} size={22} />
                 {!isCollapsed && <span>Projets</span>}
+              </div>
+            </NavLink>
+          </li>
+
+         <li className="nav-item mb-2">
+            <NavLink to="/admin/services" className={navLinkClasses} style={navLinkStyle} data-label="Services">
+              <div className="d-flex align-items-center">
+                <MdMiscellaneousServices className={isCollapsed ? "" : "me-2"} size={22} />
+                {!isCollapsed && <span>Services</span>}
               </div>
             </NavLink>
           </li>

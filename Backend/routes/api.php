@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\FrameworkController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\ToolController;
 use App\Http\Controllers\Api\TranslationController;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout']);
 
 // ============================================================
 // ROUTES PUBLIQUES - FRAMEWORKS
@@ -44,6 +46,13 @@ Route::get('/tools/{tool}', [ToolController::class, 'show']);
 
 Route::get('/projects', [ProjectController::class, 'index']);
 Route::get('/projects/{project}', [ProjectController::class, 'show']);
+
+// ============================================================
+// ROUTES PUBLIQUES - SERVICES
+// ============================================================
+
+Route::get('/services', [ServiceController::class, 'index']);
+Route::get('/services/{service}', [ServiceController::class, 'show']);
 
 // ============================================================
 // ROUTE PUBLIQUE - CONTACT
@@ -76,8 +85,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // DÉCONNEXION
     // --------------------------------------------------------
 
-    Route::post('/logout', [AuthController::class, 'logout']);
-
     // ========================================================
     // GESTION DES FRAMEWORKS
     // ========================================================
@@ -105,6 +112,17 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::apiResource('projects', ProjectController::class)
         ->except(['index', 'show']);
+
+    // ========================================================
+    // GESTION DES SERVICES
+    // ========================================================
+
+    Route::get('/admin/services', [ServiceController::class, 'index']);
+    Route::get('/admin/services/{service}', [ServiceController::class, 'show']);
+
+    Route::post('/services', [ServiceController::class, 'store']);
+    Route::put('/services/{service}', [ServiceController::class, 'update']);
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
 
     // ========================================================
     // DASHBOARD ADMIN - CONTACTS

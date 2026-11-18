@@ -11,7 +11,9 @@ const NAV_LINKS = [
   { to: '/about', label: 'A propos' },
   { to: '/skills', label: 'Compétences' },
   { to: '/project', label: 'Projets' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/service', label: 'Services' },
+  { to: '/contact', label: 'Contact' }
+  
 ];
 
 export default function Header() {
