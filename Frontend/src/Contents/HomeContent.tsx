@@ -42,28 +42,7 @@ type GeometryKind = 'icosahedron' | 'torus' | 'octahedron';
    CONTENU DES NOUVELLES SECTIONS
    Modifie librement ces textes pour qu'ils collent à ta réalité.
    ============================================================ */
-const HIGHLIGHTS = [
-  {
-    icon: FaGraduationCap,
-    title: 'Master 1 — 3iL Ingénieurs',
-    text: 'Formation EADL à Limoges'
-  },
-  {
-    icon: FaAward,
-    title: 'DEC obtenu',
-    text: 'Institut Universitaire de la Côte, Douala'
-  },
-  {
-    icon: FaCode,
-    title: 'Laravel & React',
-    text: 'Ma stack de développement au quotidien'
-  },
-  {
-    icon: FaPalette,
-    title: 'Design UI/UX',
-    text: 'Maquettes et interfaces conçues sur Figma'
-  }
-];
+
 
 const WHAT_I_DO = [
   {
@@ -424,32 +403,7 @@ const HomeSections = React.memo(function HomeSections({ isDark }: { isDark: bool
     <div id="home-sections" className="position-relative" style={{ zIndex: 1 }}>
       <div className="container pb-5">
 
-        {/* En un coup d'œil */}
-        <div className="row g-3 mb-5 pb-4">
-          {HIGHLIGHTS.map((item, i) => {
-            const Icon = item.icon;
-            return (
-              <div key={item.title} className="col-12 col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay={i * 80}>
-                <div
-                  className="p-4 rounded-4 h-100 d-flex align-items-center gap-3"
-                  style={{ backgroundColor: cardBg, border: cardBorder, boxShadow: cardShadow }}
-                >
-                  <div
-                    className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
-                    style={{ width: '48px', height: '48px', backgroundColor: 'var(--color-surface-2)', color: i % 2 === 0 ? ACCENT : GREEN, border: `1px solid ${(i % 2 === 0 ? ACCENT : GREEN)}55` }}
-                  >
-                    <Icon size={22} />
-                  </div>
-                  <div>
-                    <h6 className="fw-bold mb-1" style={{ color: 'var(--color-text-main)', fontSize: '0.95rem' }}>{item.title}</h6>
-                    <p className="small mb-0" style={{ color: 'var(--color-text-muted)' }}>{item.text}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
+       
         {/* Ce que je fais */}
         <div className="py-5">
           <SectionTitle
