@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\FrameworkController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\StatisticController;
 use App\Http\Controllers\Api\ToolController;
 use App\Http\Controllers\Api\TranslationController;
 use Illuminate\Http\Request;
@@ -81,9 +82,12 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         return $request->user();
     });
 
-    // --------------------------------------------------------
-    // DÉCONNEXION
-    // --------------------------------------------------------
+    // ========================================================
+    // DASHBOARD ADMIN - STATISTIQUES
+    // ========================================================
+
+    Route::get('/admin/statistics', [StatisticController::class, 'index']);
+    Route::get('/admin/statistics/overview', [StatisticController::class, 'overview']);
 
     // ========================================================
     // GESTION DES FRAMEWORKS

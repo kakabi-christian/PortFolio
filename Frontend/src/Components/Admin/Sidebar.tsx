@@ -167,14 +167,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             </NavLink>
           </li>
 
-          <li className="nav-item mb-2">
-            <NavLink to="/admin/stats-graphe" className={navLinkClasses} style={navLinkStyle} data-label="Analyses Graphiques">
-              <div className="d-flex align-items-center">
-                <MdBarChart className={isCollapsed ? "" : "me-2"} size={22} />
-                {!isCollapsed && <span>Analyses Graphiques</span>}
-              </div>
-            </NavLink>
-          </li>
 
           <li className="nav-item mb-2">
             <NavLink to="/admin/databases" className={navLinkClasses} style={navLinkStyle} data-label="Bases de données">

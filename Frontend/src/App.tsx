@@ -16,6 +16,7 @@ import ContactPage from './Pages/Admin/ContactPage';
 import ProjectPage from './Pages/Admin/ProjectPage';
 import Service from './Pages/Service';
 import ServicePage from './Pages/Admin/ServicePage';
+import StatsPage from './Pages/Admin/StatsPage';
 
 function AppContent() {
   const location = useLocation();
@@ -45,6 +46,7 @@ function AppContent() {
             <Route path="contacts" element={<ContactPage />} />
             <Route path="projects" element={<ProjectPage />} />
             <Route path="services" element={<ServicePage />} />
+            <Route path="stats" element={<StatsPage />} />
           </Route> 
         </Routes>
       </main>
